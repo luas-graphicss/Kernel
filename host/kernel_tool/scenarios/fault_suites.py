@@ -9,6 +9,7 @@ from kernel_tool.scenarios.model import (
     Devices,
     Scenario,
 )
+from kernel_tool.scenarios.network_suites import NETWORK_FAULT_SUITES
 
 DEVICE_RESET = "device-reset"
 STORAGE_CRASH = "storage-crash"
@@ -39,4 +40,5 @@ FLUSH_TRACE = replace(
 FAULT_SUITES: dict[str, tuple[Scenario, ...]] = {
     DEVICE_RESET: (STALLED_DEVICE,),
     STORAGE_CRASH: (FLUSH_TRACE,),
+    **NETWORK_FAULT_SUITES,
 }

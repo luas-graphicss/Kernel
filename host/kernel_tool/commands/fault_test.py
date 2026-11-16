@@ -3,6 +3,7 @@ import logging
 import sys
 
 from kernel_tool.commands.options import CommandRegistry, add_profile_option, suite_context
+from kernel_tool.faults.injection import injection_stage
 from kernel_tool.faults.stages import (
     Stage,
     format_stage,
@@ -12,6 +13,7 @@ from kernel_tool.faults.stages import (
 )
 from kernel_tool.outcome import CheckError, ExitCode
 from kernel_tool.scenarios.fault_suites import FAULT_SUITES, STORAGE_CRASH
+from kernel_tool.scenarios.network_suites import FAULTS
 from kernel_tool.scenarios.report import format_result, suite_document, write_document
 from kernel_tool.scenarios.runner import ScenarioResult, SuiteContext, run_scenario
 from kernel_tool.workspace import Workspace
@@ -24,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 def register(commands: CommandRegistry) -> None:
     fault = commands.add_parser(
-        "fault-test", help="inject storage and device faults and check what survives them"
+        "fault-test", help="inject storage, device and network faults and check what survives them"
     )
     add_profile_option(fault)
     fault.add_argument("--suite", required=True, choices=sorted(FAULT_SUITES), help="fault suite")
@@ -55,10 +57,12 @@ def run_fault_suite(workspace: Workspace, options: argparse.Namespace) -> ExitCo
 
     stages = []
     if suite == STORAGE_CRASH:
-        for stage in storage_crash_stages(context, results[0], options.sequences, options.seed):
-            sys.stdout.write(format_stage(stage))
-            sys.stdout.flush()
-            stages.append(stage)
+        stages = storage_crash_stages(context, results[0], options.sequences, options.seed)
+    elif suite == FAULTS:
+        stages = [injection_stage()]
+    for stage in stages:
+        sys.stdout.write(format_stage(stage))
+        sys.stdout.flush()
 
     report = context.outputs.directory / "reports" / f"{suite}.json"
     document = suite_document(suite, context.profile.name, results)

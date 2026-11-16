@@ -7,11 +7,18 @@ from kernel_tool.outcome import CheckError, ExitCode
 from kernel_tool.scenarios.bootstrap import BOOTSTRAP
 from kernel_tool.scenarios.guest_suites import GUEST_SUITES
 from kernel_tool.scenarios.model import Scenario
+from kernel_tool.scenarios.network_suites import NETWORK_SUITES
 from kernel_tool.scenarios.report import format_result, suite_document, write_document
 from kernel_tool.scenarios.runner import run_scenario
+from kernel_tool.scenarios.system_suites import SYSTEM_SUITES
 from kernel_tool.workspace import Workspace
 
-SUITES: dict[str, tuple[Scenario, ...]] = {"bootstrap": BOOTSTRAP, **GUEST_SUITES}
+SUITES: dict[str, tuple[Scenario, ...]] = {
+    "bootstrap": BOOTSTRAP,
+    **GUEST_SUITES,
+    **NETWORK_SUITES,
+    **SYSTEM_SUITES,
+}
 
 logger = logging.getLogger(__name__)
 
