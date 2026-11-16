@@ -1,3 +1,4 @@
+#include "kernel/devices/device_registry.h"
 #include "kernel/diagnostics/halt.h"
 #include "kernel/memory/kernel_space.h"
 #include "kernel/memory/physical_memory.h"
@@ -14,5 +15,6 @@ _Noreturn void supervisor_main(uint64_t hart, const void *device_tree_blob)
     kernel_space_init(environment);
     timer_init(environment->description.timebase_frequency);
     kernel_objects_init();
+    device_registry_init(environment);
     kernel_halt(supervisor_policy_run());
 }

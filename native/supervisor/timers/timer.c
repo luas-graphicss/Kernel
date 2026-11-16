@@ -1,6 +1,7 @@
 #include "kernel/timers/timer.h"
 
 #include "kernel/arch/cpu.h"
+#include "kernel/arch/interrupts.h"
 #include "kernel/arch/sbi.h"
 #include "kernel/diagnostics/console.h"
 #include "kernel/diagnostics/halt.h"
@@ -59,7 +60,8 @@ bool timer_is_pending(void)
 void timer_wait_until(uint64_t deadline)
 {
     timer_arm(deadline);
-    while (!cpu_timer_is_pending() && cpu_time_read() < deadline) {
+    while (!cpu_timer_is_pending() && !cpu_external_interrupt_is_pending() &&
+           cpu_time_read() < deadline) {
         cpu_wait_for_interrupt();
     }
     timer_disarm();

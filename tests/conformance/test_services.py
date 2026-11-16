@@ -17,8 +17,14 @@ from kernel_protocol.wire.message import FLAG_REPLY, Message
 from kernel_protocol.wire.spawn import PAGE_BYTES, encode_spawn_request, name_is_valid
 from kernel_services.echo import main as echo
 from kernel_services.echo.protocol import OPERATION_ECHO, OPERATION_REGISTER, OPERATION_STOP
-from kernel_services.init import main as init
-from kernel_services.init.manifest import KNOWN_GRANTS, SERVICES, Service
+from kernel_services.init import probed
+from kernel_services.init.manifest import (
+    KNOWN_GRANTS,
+    SERVICES,
+    STORAGE,
+    SYSTEM_SERVICES,
+    Service,
+)
 
 SYSTEM = 0x1000001
 REGISTRATION = 0x1000002
@@ -28,19 +34,20 @@ REPLY = 0x1000010
 ECHO_PROGRAM = "kernel_services.echo.main"
 EXITED_CLEANLY = WAIT_REASON_EXIT << WAIT_REASON_SHIFT
 REGISTERED = Delivery(Message(OPERATION_REGISTER, 0, 1, b""), transferred=SERVICE_ENDPOINT)
-ECHOED = Delivery(Message(OPERATION_ECHO, FLAG_REPLY, init.PROBE_CORRELATION, init.PROBE_PAYLOAD))
-STOPPED = Delivery(Message(OPERATION_STOP, FLAG_REPLY, init.PROBE_CORRELATION, b""))
+ECHOED = Delivery(
+    Message(OPERATION_ECHO, FLAG_REPLY, probed.PROBE_CORRELATION, probed.PROBE_PAYLOAD)
+)
+STOPPED = Delivery(Message(OPERATION_STOP, FLAG_REPLY, probed.PROBE_CORRELATION, b""))
 
 
-def run_init(
+def run_probes(
     native: NativeProcess, announced: Delivery, responses: list[Delivery], status: int
 ) -> bool:
-    native.handles = (SYSTEM,)
-    native.call_results = {ENDPOINT_CREATE: [REGISTRATION], PROCESS_WAIT: [status]}
+    native.call_results = {PROCESS_WAIT: [status]}
     native.spawn_results = [SERVICE_PROCESS]
     native.deliveries = [announced]
     native.responses = responses
-    return init.main()
+    return probed.run(SYSTEM, REGISTRATION)
 
 
 def closed(native: NativeProcess) -> list[int]:
@@ -56,7 +63,7 @@ def test_service_asking_for_an_unknown_capability_is_refused() -> None:
 
 def test_every_service_of_the_manifest_can_be_started_by_init() -> None:
     assert name_is_valid(INIT_PROGRAM)
-    for service in SERVICES:
+    for service in (*SERVICES, *SYSTEM_SERVICES):
         assert name_is_valid(service.program)
         assert importlib.util.find_spec(service.program) is not None
         assert INIT_PRIORITY <= service.priority < PRIORITY_LEVELS
@@ -64,10 +71,18 @@ def test_every_service_of_the_manifest_can_be_started_by_init() -> None:
         assert set(service.grants) <= set(KNOWN_GRANTS)
 
 
-def test_init_starts_probes_and_stops_each_service(
+def test_storage_mounts_name_distinct_devices() -> None:
+    mounts = [mount for mount, _device in STORAGE]
+    devices = [device for _mount, device in STORAGE]
+
+    assert mounts == [b"boot", b"data"]
+    assert len(set(devices)) == len(devices)
+
+
+def test_init_starts_probes_and_stops_each_probed_service(
     native_process: NativeProcess, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    assert run_init(native_process, REGISTERED, [ECHOED, STOPPED], EXITED_CLEANLY) is True
+    assert run_probes(native_process, REGISTERED, [ECHOED, STOPPED], EXITED_CLEANLY) is True
 
     grants = ((REGISTRATION, RIGHT_SEND),)
     assert native_process.spawned == [
@@ -79,34 +94,32 @@ def test_init_starts_probes_and_stops_each_service(
         OPERATION_ECHO,
         OPERATION_STOP,
     ]
-    assert closed(native_process) == [SERVICE_ENDPOINT, SERVICE_PROCESS, REGISTRATION]
+    assert closed(native_process) == [SERVICE_ENDPOINT, SERVICE_PROCESS]
     assert capsys.readouterr().out.splitlines() == [
-        "init: runtime=micropython privilege=user",
         f"init: service={ECHO_PROGRAM} ready",
         f"init: service={ECHO_PROGRAM} echo=ok",
         f"init: service={ECHO_PROGRAM} exit=0",
     ]
 
 
-def test_init_fails_when_the_answer_is_not_what_it_sent(
+def test_probe_fails_when_the_answer_is_not_what_was_sent(
     native_process: NativeProcess, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    altered = Delivery(Message(OPERATION_ECHO, FLAG_REPLY, init.PROBE_CORRELATION, b"other"))
+    altered = Delivery(Message(OPERATION_ECHO, FLAG_REPLY, probed.PROBE_CORRELATION, b"other"))
 
-    assert run_init(native_process, REGISTERED, [altered, STOPPED], EXITED_CLEANLY) is False
+    assert run_probes(native_process, REGISTERED, [altered, STOPPED], EXITED_CLEANLY) is False
     assert f"init: service={ECHO_PROGRAM} echo=failed" in capsys.readouterr().out.splitlines()
 
 
-def test_init_fails_when_the_service_does_not_register_an_endpoint(
+def test_probe_fails_when_the_service_does_not_register_an_endpoint(
     native_process: NativeProcess, capsys: pytest.CaptureFixture[str]
 ) -> None:
     unregistered = Delivery(Message(OPERATION_REGISTER, 0, 1, b""))
 
-    assert run_init(native_process, unregistered, [], EXITED_CLEANLY) is False
+    assert run_probes(native_process, unregistered, [], EXITED_CLEANLY) is False
     assert native_process.requested == []
-    assert closed(native_process) == [SERVICE_PROCESS, REGISTRATION]
+    assert closed(native_process) == [SERVICE_PROCESS]
     assert capsys.readouterr().out.splitlines() == [
-        "init: runtime=micropython privilege=user",
         f"init: service={ECHO_PROGRAM} echo=failed",
         f"init: service={ECHO_PROGRAM} exit=0",
     ]
@@ -117,10 +130,10 @@ def test_init_fails_when_the_service_does_not_register_an_endpoint(
     [EXITED_CLEANLY | 1, WAIT_REASON_KILLED << WAIT_REASON_SHIFT],
     ids=["status", "killed"],
 )
-def test_init_fails_when_the_service_does_not_exit_cleanly(
+def test_probe_fails_when_the_service_does_not_exit_cleanly(
     native_process: NativeProcess, status: int
 ) -> None:
-    assert run_init(native_process, REGISTERED, [ECHOED, STOPPED], status) is False
+    assert run_probes(native_process, REGISTERED, [ECHOED, STOPPED], status) is False
 
 
 def test_echo_registers_its_endpoint_then_answers_until_stopped(

@@ -79,6 +79,24 @@ jobs:
       - name: Run the scheduling programs
         run: sh .github/scripts/classify-exit.sh uv run kernel-tool test --profile qemu-riscv64 --suite scheduling
 
+      - name: Run the device driver and service programs
+        run: sh .github/scripts/classify-exit.sh uv run kernel-tool test --profile qemu-riscv64 --suite devices
+
+      - name: Run the file service programs
+        run: sh .github/scripts/classify-exit.sh uv run kernel-tool test --profile qemu-riscv64 --suite vfs
+
+      - name: Run the persistent volume programs
+        run: sh .github/scripts/classify-exit.sh uv run kernel-tool test --profile qemu-riscv64 --suite storage
+
+      - name: Stall a device and fail its reset
+        run: sh .github/scripts/classify-exit.sh uv run kernel-tool fault-test --profile qemu-riscv64 --suite device-reset
+
+      - name: Crash the volume at every write and flush
+        run: sh .github/scripts/classify-exit.sh uv run kernel-tool fault-test --profile qemu-riscv64 --suite storage-crash
+
+      - name: Verify the volume image corpus
+        run: sh .github/scripts/classify-exit.sh uv run kernel-tool verify-filesystem --corpus tests/faults/storage
+
       - name: Verify and reproduce the images
         run: sh .github/scripts/classify-exit.sh uv run kernel-tool verify-artifacts --profile qemu-riscv64 --reproduce
 

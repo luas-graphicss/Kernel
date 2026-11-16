@@ -16,7 +16,7 @@ POLICY_MANIFEST := $(RUNTIME_PORT)/supervisor/manifest.py
 POLICY_INPUTS := $(shell find src/kernel_core src/kernel_protocol -name '*.py' | LC_ALL=C sort)
 POLICY_FROZEN := $(RUNTIME_BUILD)/supervisor/frozen/policy/frozen_content.o
 
-CLIENT_INPUTS := $(shell find src/kernel_client src/kernel_protocol -name '*.py' | LC_ALL=C sort)
+CLIENT_INPUTS := $(shell find src/kernel_client src/kernel_drivers src/kernel_protocol -name '*.py' | LC_ALL=C sort)
 INIT_MANIFEST := $(RUNTIME_PORT)/user/manifest.py
 INIT_INPUTS := $(CLIENT_INPUTS) $(shell find src/kernel_services -name '*.py' | LC_ALL=C sort)
 INIT_FROZEN := $(RUNTIME_BUILD)/user/frozen/init/frozen_content.o

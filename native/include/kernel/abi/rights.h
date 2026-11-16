@@ -16,6 +16,7 @@
 #define OBJECT_ENDPOINT 3u
 #define OBJECT_BUFFER 4u
 #define OBJECT_REPLY 5u
+#define OBJECT_DEVICE 6u
 
 #define CAPABILITY_MAX_DEPTH 16u
 

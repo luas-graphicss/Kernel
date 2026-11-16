@@ -19,7 +19,7 @@ kernel-tool = "kernel_tool.cli:main"
 dev = ["mypy>=1.13", "pytest>=8.3", "ruff>=0.8"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["host/kernel_tool"]
+packages = ["host/kernel_tool", "src/kernel_protocol", "src/kernel_services"]
 
 [tool.ruff]
 line-length = 100

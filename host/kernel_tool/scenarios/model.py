@@ -29,6 +29,48 @@ class Deadline(StrEnum):
     SOAK = "soak"
 
 
+class DataSource(StrEnum):
+    FORMATTED = "formatted"
+    BLANK = "blank"
+    KEPT = "kept"
+    UNKNOWN_VERSION = "unknown-format-version"
+    DAMAGED_NEWEST_ROOT = "newest-root-damaged"
+
+
+class DataAttachment(StrEnum):
+    PLAIN = "plain"
+    READ_ONLY = "read-only"
+    FLUSH_FAILING = "flush-failing"
+    TRACED = "traced"
+
+
+class DataCheck(StrEnum):
+    CONSISTENT = "consistent"
+    REPORTED = "reported"
+    UNCHANGED = "unchanged"
+    UNCHECKED = "unchecked"
+
+
+@dataclass(frozen=True, slots=True)
+class DataDisk:
+    source: DataSource = DataSource.FORMATTED
+    attachment: DataAttachment = DataAttachment.PLAIN
+    check: DataCheck = DataCheck.CONSISTENT
+
+
+@dataclass(frozen=True, slots=True)
+class Devices:
+    boot: bool = False
+    data: DataDisk | None = None
+    scratch: bool = False
+    stalled: bool = False
+    entropy: bool = False
+
+
+NO_DEVICES = Devices()
+SYSTEM_DEVICES = Devices(boot=True, data=DataDisk(), entropy=True)
+
+
 @dataclass(frozen=True, slots=True, kw_only=True)
 class Scenario:
     name: str
@@ -43,3 +85,5 @@ class Scenario:
     repeats: int = 1
     deadline: Deadline = Deadline.BOOT
     compares_corpus: bool = False
+    devices: Devices = NO_DEVICES
+    serial_input: str = ""

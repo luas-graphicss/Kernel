@@ -51,5 +51,14 @@ struct syscall_result syscall_process_wait(struct process *caller, const uint64_
 struct syscall_result syscall_process_kill(struct process *caller, const uint64_t *arguments);
 struct syscall_result syscall_process_interrupt(struct process *caller, const uint64_t *arguments);
 struct syscall_result syscall_system_counters(struct process *caller, const uint64_t *arguments);
+struct syscall_result syscall_device_list(struct process *caller, const uint64_t *arguments);
+struct syscall_result syscall_device_claim(struct process *caller, const uint64_t *arguments);
+struct syscall_result syscall_device_open(struct process *caller, const uint64_t *arguments);
+struct syscall_result syscall_device_config(struct process *caller, const uint64_t *arguments);
+struct syscall_result syscall_device_submit(struct process *caller, const uint64_t *arguments);
+struct syscall_result syscall_device_wait(struct process *caller, const uint64_t *arguments);
+struct syscall_result syscall_device_reset(struct process *caller, const uint64_t *arguments);
+struct syscall_result syscall_serial_write(struct process *caller, const uint64_t *arguments);
+struct syscall_result syscall_serial_read(struct process *caller, const uint64_t *arguments);
 
 #endif

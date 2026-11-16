@@ -2,15 +2,18 @@
 
 #include <stddef.h>
 
+#include "kernel/abi/devices.h"
 #include "kernel/abi/errors.h"
 #include "kernel/abi/rights.h"
+#include "kernel/devices/device_registry.h"
 #include "kernel/ipc/call.h"
 #include "kernel/ipc/endpoint.h"
 #include "kernel/memory/buffer.h"
 #include "kernel/processes/process.h"
 
 #define CAPABILITY_SLOTS PROFILE_CAPABILITIES_PER_PROCESS
-#define OBJECT_CAPACITY (PROFILE_PROCESSES * CAPABILITY_SLOTS + PROFILE_PROCESSES + 1u)
+#define OBJECT_CAPACITY \
+    (PROFILE_PROCESSES * CAPABILITY_SLOTS + PROFILE_PROCESSES + DEVICE_SLOTS + 1u)
 
 static struct slot_record object_records[OBJECT_CAPACITY];
 static struct kernel_object objects[OBJECT_CAPACITY];
@@ -58,6 +61,9 @@ static void release_capability(void *context, uint32_t space, uint64_t handle, u
     }
     if (object != NULL && object->kind == OBJECT_BUFFER) {
         buffer_revoke_mappings(process_at(space), handle);
+    }
+    if (object != NULL && object->kind == OBJECT_DEVICE) {
+        device_registry_capability_released(space, handle);
     }
     object_release(&table, handle);
 }

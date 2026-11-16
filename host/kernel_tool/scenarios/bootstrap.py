@@ -1,9 +1,19 @@
-from kernel_tool.scenarios.model import BootModule, Deadline, DeviceTreeSource, Image, Scenario
+from kernel_tool.scenarios.model import (
+    SYSTEM_DEVICES,
+    BootModule,
+    Deadline,
+    DeviceTreeSource,
+    Image,
+    Scenario,
+)
 from kernel_tool.verification.transcript import KernelStatus
 
 COLLECTOR_ROOTS = (*(f"s{index}" for index in range(12)), "stack-slot")
 SELFTEST_CASES = ("integers", "bytes", "exceptions", "imports", "bindings", "collection")
 USER_OUTPUT = (r"^init: ", r"^user: ")
+BLOCK_SERVICE_READY = (
+    r"^init: service=kernel_services\.block\.main device=kernel-(boot|data) ready$"
+)
 
 BOOT = Scenario(
     name="boot",
@@ -22,11 +32,34 @@ BOOT = Scenario(
         r"^init: service=kernel_services\.echo\.main ready$",
         r"^init: service=kernel_services\.echo\.main echo=ok$",
         r"^init: service=kernel_services\.echo\.main exit=0$",
+        r"^init: devices serial=1 entropy=1 block=2$",
+        r"^init: service=kernel_services\.console\.main ready$",
+        r"^init: service=kernel_services\.entropy\.main ready$",
+        BLOCK_SERVICE_READY,
+        BLOCK_SERVICE_READY,
+        r"^init: service=kernel_services\.filesystem\.main ready$",
+        r"^console: service=ready$",
+        r"^init: console=ok$",
+        r"^init: entropy=ok bytes=32$",
+        r"^init: mount=boot mode=read-only reason=verified$",
+        r"^init: boot-file=system/release bytes=[1-9]\d*$",
+        r"^init: mount=data mode=read-write reason=clean$",
+        r"^init: data=ok boots=1$",
+        r"^init: mount=tmp mode=read-write reason=clean$",
+        r"^init: service=kernel_services\.filesystem\.main exit=0$",
+        r"^init: service=kernel_services\.console\.main exit=0$",
         r"^policy: reaped=init reason=exit value=0 live=0 memory-in-use=0$",
         r"^policy: resources=released$",
     ),
-    forbidden_lines=(r"^trap: ", r"^panic: ", r"^Traceback ", r"^user: fault "),
+    forbidden_lines=(
+        r"^trap: ",
+        r"^panic: ",
+        r"^Traceback ",
+        r"^user: fault ",
+        r"^init: .*(failed|unavailable)",
+    ),
     repeats=3,
+    devices=SYSTEM_DEVICES,
 )
 
 RUNTIME_SELFTEST = Scenario(

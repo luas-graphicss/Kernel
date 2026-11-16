@@ -18,6 +18,14 @@ MP_DECLARE_CONST_FUN_OBJ_1(process_buffer_unmap_obj);
 MP_DECLARE_CONST_FUN_OBJ_1(process_buffer_size_obj);
 MP_DECLARE_CONST_FUN_OBJ_3(process_buffer_read_obj);
 MP_DECLARE_CONST_FUN_OBJ_3(process_buffer_write_obj);
+MP_DECLARE_CONST_FUN_OBJ_1(process_device_list_obj);
+MP_DECLARE_CONST_FUN_OBJ_2(process_device_open_obj);
+MP_DECLARE_CONST_FUN_OBJ_3(process_device_config_obj);
+MP_DECLARE_CONST_FUN_OBJ_2(process_device_submit_obj);
+MP_DECLARE_CONST_FUN_OBJ_2(process_device_wait_obj);
+MP_DECLARE_CONST_FUN_OBJ_2(process_serial_write_obj);
+MP_DECLARE_CONST_FUN_OBJ_3(process_serial_read_obj);
+MP_DECLARE_CONST_FUN_OBJ_VAR_BETWEEN(process_crc32_obj);
 
 static inline long binding_argument(mp_obj_t value)
 {

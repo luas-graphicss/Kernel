@@ -45,10 +45,19 @@ O supervisor não confia em quem chama nem na biblioteca cliente:
 | 18 | `process_kill` | `a0`: handle do processo | 0 |
 | 19 | `process_interrupt` | `a0`: handle do processo | 0 |
 | 20 | `system_counters` | `a0`: capability do sistema, `a1`: endereço do buffer, `a2`: tamanho do buffer | Quantidade de contadores |
+| 21 | `device_list` | `a0`: capability do sistema, `a1`: endereço do buffer, `a2`: tamanho do buffer | Quantidade de dispositivos |
+| 22 | `device_claim` | `a0`: capability do sistema, `a1`: slot | Handle do dispositivo |
+| 23 | `device_open` | `a0`: dispositivo, `a1`: features pedidas, `a2`: endereço da sessão | 0 |
+| 24 | `device_config` | `a0`: dispositivo, `a1`: offset, `a2`: endereço do buffer, `a3`: comprimento | Bytes copiados |
+| 25 | `device_submit` | `a0`: dispositivo, `a1`: endereço do pedido | Token do pedido |
+| 26 | `device_wait` | `a0`: dispositivo, `a1`: endereço da conclusão, `a2`: deadline | 1 |
+| 27 | `device_reset` | `a0`: dispositivo | 0 |
+| 28 | `serial_write` | `a0`: dispositivo, `a1`: endereço do buffer, `a2`: comprimento | Bytes aceitos |
+| 29 | `serial_read` | `a0`: dispositivo, `a1`: endereço do buffer, `a2`: capacidade, `a3`: deadline | Bytes lidos |
 
 Qualquer outro número devolve `-UNSUPPORTED`.
 
-As chamadas 4 a 7 estão descritas em `capabilities.md`, as chamadas 8 a 12 em `messages.md`, as chamadas 13 a 15 em `buffers.md` e as chamadas 16 a 20 em `processes.md`.
+As chamadas 4 a 7 estão descritas em `capabilities.md`, as chamadas 8 a 12 em `messages.md`, as chamadas 13 a 15 em `buffers.md`, as chamadas 16 a 20 em `processes.md` e as chamadas 21 a 29 em `devices.md`.
 
 ## Processo e tempo
 
@@ -64,7 +73,7 @@ Escreve bytes no console de diagnóstico do supervisor.
 - Faixa `[endereço, endereço + comprimento)` que o processo não pode ler, ou soma que estoura 64 bits: `-BAD_ADDRESS`, nada é escrito.
 - Comprimento zero é válido e devolve 0.
 
-Esta syscall existe enquanto o serviço de console não existe. Ela não recebe capability, e por isso sai da tabela quando o console passar a ser um endpoint de IPC.
+Esta syscall não recebe capability. Ela é o canal de diagnóstico dos programas e das suítes, e não passa pelo serviço de console: a saída de um processo comum deve usar o endpoint do console, descrito em `device-services.md`. Ela sai da tabela quando os programas do sistema tiverem migrado para o serviço.
 
 ### `clock_now`
 

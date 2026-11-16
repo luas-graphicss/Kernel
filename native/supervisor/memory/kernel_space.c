@@ -120,6 +120,22 @@ void kernel_space_init(const struct boot_environment *environment)
     kernel_space_activate();
 }
 
+bool kernel_space_map_device(struct memory_range registers)
+{
+    uint64_t end;
+
+    if (registers.base % PAGE_BYTES != 0 || !memory_range_end(registers, &end)) {
+        return false;
+    }
+    for (uint64_t page = registers.base; page < end; page += PAGE_BYTES) {
+        if (page_tables_map(&tables, page, page, READ_WRITE) != PAGE_OK) {
+            return false;
+        }
+    }
+    kernel_space_activate();
+    return true;
+}
+
 const struct page_tables *kernel_space_tables(void)
 {
     return &tables;

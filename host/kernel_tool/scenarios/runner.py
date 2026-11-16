@@ -7,9 +7,11 @@ from kernel_tool.profiles.model import Profile
 from kernel_tool.qemu.command import BootRequest, boot_command
 from kernel_tool.qemu.session import SessionResult, run_session
 from kernel_tool.scenarios.corpus import reference_corpus
+from kernel_tool.scenarios.disks import check_data, prepare_machine
 from kernel_tool.scenarios.evaluation import check_corpus, check_repeats, check_transcript
 from kernel_tool.scenarios.fixtures import boot_module_file, dump_device_tree, edited_device_tree
 from kernel_tool.scenarios.model import Deadline, DeviceTreeSource, Image, Scenario
+from kernel_tool.storage.volumes import VolumeReport
 from kernel_tool.toolchain.fetch import sha256_file
 from kernel_tool.toolchain.resolve import Toolchain
 from kernel_tool.verification.transcript import read_transcript
@@ -33,6 +35,7 @@ class ScenarioResult:
     image: str
     image_sha256: str
     boot_module_sha256: str | None
+    volume: VolumeReport | None
     transcript: tuple[str, ...]
 
     @property
@@ -41,21 +44,40 @@ class ScenarioResult:
 
 
 def run_scenario(scenario: Scenario, context: SuiteContext) -> ScenarioResult:
-    request = _boot_request(scenario, context)
-    command = boot_command(context.profile, context.toolchain, request)
+    outputs = context.outputs
+    kernel = outputs.kernel if scenario.image is Image.KERNEL else outputs.selftest_kernel
+    memory_mib = scenario.memory_mib or context.profile.machine.memory_mib
+    boot_module = boot_module_file(scenario.boot_module, outputs, context.directory)
+    device_tree = _device_tree_file(scenario, context, memory_mib)
     deadline = _deadline_seconds(scenario, context.profile)
+    serial_input = scenario.serial_input.encode("utf-8") if scenario.serial_input else None
 
     failures: list[str] = []
     transcripts: list[tuple[str, ...]] = []
+    volume = None
     duration = 0.0
     for _ in range(scenario.repeats):
-        session = run_session(command, deadline)
+        machine = prepare_machine(scenario.devices, outputs, context.directory)
+        request = BootRequest(
+            kernel=kernel,
+            memory_mib=memory_mib,
+            boot_module=boot_module,
+            device_tree=device_tree,
+            arguments=scenario.arguments,
+            drives=machine.drives,
+            entropy=scenario.devices.entropy,
+        )
+        command = boot_command(context.profile, context.toolchain, request)
+        session = run_session(command, deadline, serial_input)
         duration += session.duration_seconds
         transcript = read_transcript(session.transcript)
         transcripts.append(transcript.lines)
         failures.extend(_session_failures(session, deadline))
         if not failures:
             failures.extend(check_transcript(scenario, transcript))
+        if not failures and scenario.devices.data is not None:
+            data_failures, volume = check_data(scenario.devices.data, machine, transcript.lines)
+            failures.extend(data_failures)
         if failures:
             break
     if not failures:
@@ -68,22 +90,11 @@ def run_scenario(scenario: Scenario, context: SuiteContext) -> ScenarioResult:
         failures=tuple(failures),
         runs=len(transcripts),
         duration_seconds=round(duration, 3),
-        image=request.kernel.name,
-        image_sha256=sha256_file(request.kernel),
-        boot_module_sha256=sha256_file(request.boot_module) if request.boot_module else None,
+        image=kernel.name,
+        image_sha256=sha256_file(kernel),
+        boot_module_sha256=sha256_file(boot_module) if boot_module else None,
+        volume=volume,
         transcript=transcripts[-1],
-    )
-
-
-def _boot_request(scenario: Scenario, context: SuiteContext) -> BootRequest:
-    outputs = context.outputs
-    memory_mib = scenario.memory_mib or context.profile.machine.memory_mib
-    return BootRequest(
-        kernel=outputs.kernel if scenario.image is Image.KERNEL else outputs.selftest_kernel,
-        memory_mib=memory_mib,
-        boot_module=boot_module_file(scenario.boot_module, outputs, context.directory),
-        device_tree=_device_tree_file(scenario, context, memory_mib),
-        arguments=scenario.arguments,
     )
 
 

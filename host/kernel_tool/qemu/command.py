@@ -2,7 +2,15 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from kernel_tool.profiles.model import Profile
+from kernel_tool.qemu.drives import Drive, drive_arguments
 from kernel_tool.toolchain.resolve import Toolchain
+
+ENTROPY_ARGUMENTS = (
+    "-object",
+    "rng-builtin,id=entropy",
+    "-device",
+    "virtio-rng-device,rng=entropy",
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -12,6 +20,8 @@ class BootRequest:
     boot_module: Path | None = None
     device_tree: Path | None = None
     arguments: str | None = None
+    drives: tuple[Drive, ...] = ()
+    entropy: bool = False
 
 
 def machine_arguments(
@@ -60,6 +70,10 @@ def boot_command(profile: Profile, toolchain: Toolchain, request: BootRequest) -
         command.extend(["-dtb", str(request.device_tree)])
     if request.arguments is not None:
         command.extend(["-append", request.arguments])
+    for drive in request.drives:
+        command.extend(drive_arguments(drive))
+    if request.entropy:
+        command.extend(ENTROPY_ARGUMENTS)
     return command
 
 

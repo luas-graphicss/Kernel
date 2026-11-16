@@ -1,0 +1,126 @@
+[[image]]
+name = "empty-volume"
+verdict = "mountable"
+reason = "clean"
+generation = 1
+digest = "00000000"
+problem = "slot does not hold a superblock"
+
+[[image]]
+name = "populated-volume"
+verdict = "mountable"
+reason = "clean"
+generation = 3
+digest = "dc22abf2"
+
+[[image]]
+name = "single-superblock"
+verdict = "mountable"
+reason = "recovered"
+generation = 3
+digest = "dc22abf2"
+problem = "slot does not hold a superblock"
+
+[[image]]
+name = "superblock-checksum-mismatch"
+verdict = "mountable"
+reason = "recovered"
+generation = 2
+digest = "cb7683aa"
+problem = "superblock checksum does not match"
+
+[[image]]
+name = "generation-in-wrong-slot"
+verdict = "mountable"
+reason = "recovered"
+generation = 2
+digest = "cb7683aa"
+problem = "superblock generation does not belong to its slot"
+
+[[image]]
+name = "generation-gap"
+verdict = "read-only"
+reason = "generation-gap"
+generation = 5
+digest = "dc22abf2"
+
+[[image]]
+name = "newest-root-damaged"
+verdict = "read-only"
+reason = "newest-root-damaged"
+generation = 2
+digest = "cb7683aa"
+problem = "block 11 does not match the checksum of its pointer"
+
+[[image]]
+name = "damaged-file-data"
+verdict = "read-only"
+reason = "newest-root-damaged"
+generation = 2
+digest = "cb7683aa"
+problem = "block 7 does not match the checksum of its pointer"
+
+[[image]]
+name = "truncated-to-superblocks"
+verdict = "corrupted"
+reason = "device is smaller than the smallest volume"
+
+[[image]]
+name = "truncated-tree"
+verdict = "corrupted"
+reason = "device holds no valid superblock"
+
+[[image]]
+name = "truncated-inside-a-block"
+verdict = "corrupted"
+reason = "device holds no valid superblock"
+
+[[image]]
+name = "unknown-format-version"
+verdict = "unsupported"
+reason = "volume uses a format version this system does not know"
+
+[[image]]
+name = "unknown-block-size"
+verdict = "unsupported"
+reason = "volume uses a format version this system does not know"
+
+[[image]]
+name = "newer-format-in-newest-slot"
+verdict = "unsupported"
+reason = "volume uses a format version this system does not know"
+
+[[image]]
+name = "both-superblocks-damaged"
+verdict = "corrupted"
+reason = "device holds no valid superblock"
+
+[[image]]
+name = "block-referenced-twice"
+verdict = "corrupted"
+reason = "no superblock leads to a consistent tree: block 5 is referenced twice"
+
+[[image]]
+name = "directory-cycle"
+verdict = "corrupted"
+reason = "no superblock leads to a consistent tree: block 11 is referenced twice"
+
+[[image]]
+name = "pointer-outside-volume"
+verdict = "corrupted"
+reason = "no superblock leads to a consistent tree: pointer to block 37 leaves the volume"
+
+[[image]]
+name = "index-with-wrong-type"
+verdict = "corrupted"
+reason = "no superblock leads to a consistent tree: block is not of the type its pointer expects"
+
+[[image]]
+name = "node-number-repeated"
+verdict = "corrupted"
+reason = "no superblock leads to a consistent tree: node number 2 is repeated or was never assigned"
+
+[[image]]
+name = "block-newer-than-its-root"
+verdict = "corrupted"
+reason = "no superblock leads to a consistent tree: block is newer than the block that points to it"

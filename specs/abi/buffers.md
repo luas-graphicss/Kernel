@@ -29,6 +29,8 @@ Um mapeamento não sobrevive à última capability que o permite:
 - Fechar uma capability mais fraca não desfaz um mapeamento que outra capability do mesmo processo ainda permite.
 - Quando o dono morre, o buffer é destruído e ninguém mais consegue mapeá-lo: `buffer_map` devolve `PEER_CLOSED`.
 
+Um buffer cedido a um pedido de dispositivo fica fixado até o pedido ser concluído ou o dispositivo confirmar um reset. Se o dono morre nesse intervalo, o buffer é destruído para os processos como em qualquer outro caso, mas os frames só voltam ao alocador quando o buffer é solto. Com o dispositivo em quarentena eles não voltam. As regras estão em `devices.md`.
+
 Depois que o mapeamento some, um acesso à página é uma falha de página que encerra o processo, e uma syscall que apontava para ela devolve `BAD_ADDRESS`. Isso vale também para uma resposta de IPC que chegaria em um mapeamento removido durante a chamada.
 
 A suíte `memory` cobre criação, limites, leitura e escrita por processos diferentes e remoção do mapeamento durante uma chamada bloqueada. A suíte `capabilities` cobre a relação entre mapeamento e capability.
