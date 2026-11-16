@@ -17,6 +17,7 @@ static struct capability entries[SPACES][SLOTS];
 static struct capability_registry registry;
 static int references[OBJECTS];
 static uint32_t released_rights[OBJECTS];
+static uint32_t released_space[OBJECTS];
 
 static void retain(void *context, uint64_t object)
 {
@@ -24,17 +25,19 @@ static void retain(void *context, uint64_t object)
     references[object]++;
 }
 
-static void release(void *context, uint64_t object, uint32_t rights)
+static void release(void *context, uint32_t space, uint64_t object, uint32_t rights)
 {
     (void)context;
     references[object]--;
     released_rights[object] = rights;
+    released_space[object] = space;
 }
 
 static void fresh_registry(uint32_t limit)
 {
     memset(references, 0, sizeof(references));
     memset(released_rights, 0, sizeof(released_rights));
+    memset(released_space, 0, sizeof(released_space));
     capability_registry_init(&registry, spaces, SPACES, retain, release, NULL);
     for (uint32_t space = 0; space < SPACES; space++) {
         capability_space_attach(&registry, space, records[space], entries[space], SLOTS);
@@ -258,6 +261,27 @@ static void test_closing_a_space_releases_everything_it_held(void)
     CHECK(!exists(1, stale));
 }
 
+static void test_held_rights_are_reported_per_space(void)
+{
+    uint64_t root;
+    uint64_t reader;
+
+    fresh_registry(SLOTS);
+    root = install(0, 4, RIGHT_READ | RIGHT_WRITE | RIGHT_MAP | RIGHT_DELEGATE);
+    reader = derive(0, root, RIGHT_READ | RIGHT_MAP, 1);
+
+    CHECK(capability_space_holds(&registry, 0, 4, RIGHT_MAP | RIGHT_WRITE));
+    CHECK(capability_space_holds(&registry, 1, 4, RIGHT_MAP | RIGHT_READ));
+    CHECK(!capability_space_holds(&registry, 1, 4, RIGHT_MAP | RIGHT_WRITE));
+    CHECK(!capability_space_holds(&registry, 2, 4, RIGHT_READ));
+    CHECK(!capability_space_holds(&registry, 1, 5, RIGHT_READ));
+
+    CHECK(capability_close(&registry, 1, reader) == KERNEL_OK);
+    CHECK(released_space[4] == 1 && released_rights[4] == (RIGHT_READ | RIGHT_MAP));
+    CHECK(!capability_space_holds(&registry, 1, 4, RIGHT_READ));
+    CHECK(capability_space_holds(&registry, 0, 4, RIGHT_READ));
+}
+
 int main(void)
 {
     test_installed_capability_names_its_object();
@@ -270,5 +294,6 @@ int main(void)
     test_closing_a_link_keeps_descendants_revocable();
     test_orphaned_descendants_outlive_the_root();
     test_closing_a_space_releases_everything_it_held();
+    test_held_rights_are_reported_per_space();
     return check_finish("capability");
 }
