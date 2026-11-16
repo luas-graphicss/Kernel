@@ -28,6 +28,7 @@ static bool takes_only_scalars(long number)
     case SYSCALL_PROCESS_INTERRUPT:
     case SYSCALL_DEVICE_CLAIM:
     case SYSCALL_DEVICE_RESET:
+    case SYSCALL_SYSTEM_POWER:
         return true;
     default:
         return false;

@@ -3,6 +3,8 @@ from kernel_client.calls import FAILURE, check, scalar
 from kernel_protocol.errors.codes import KernelError
 from kernel_protocol.syscalls.numbers import DEADLINE_NEVER, DEVICE_CLAIM, DEVICE_RESET
 
+REQUEST_QUEUE = 0
+
 
 class Device:
     def __init__(self, slot: int, kind: int, model: int, state: int) -> None:
@@ -13,10 +15,11 @@ class Device:
 
 
 class Session:
-    def __init__(self, features: int, generation: int, queue_size: int) -> None:
+    def __init__(self, features: int, generation: int, queue_size: int, queues: int) -> None:
         self.features = features
         self.generation = generation
         self.queue_size = queue_size
+        self.queues = queues
 
 
 def refusal(status: int) -> KernelError:
@@ -42,7 +45,7 @@ def open_session(device: int, features: int) -> Session:
     opened = _process.device_open(device, features)
     if isinstance(opened, int):
         raise refusal(opened)
-    return Session(opened[0], opened[1], opened[2])
+    return Session(opened[0], opened[1], opened[2], opened[3])
 
 
 def read_config(device: int, offset: int, length: int) -> bytes:
@@ -52,8 +55,10 @@ def read_config(device: int, offset: int, length: int) -> bytes:
     return config
 
 
-def submit(device: int, segments: tuple[tuple[int, int, int, bool], ...]) -> int:
-    return check(_process.device_submit(device, segments))
+def submit(
+    device: int, segments: tuple[tuple[int, int, int, bool], ...], queue: int = REQUEST_QUEUE
+) -> int:
+    return check(_process.device_submit(device, segments, queue))
 
 
 def wait(device: int, deadline: int = DEADLINE_NEVER) -> tuple[int, int]:

@@ -82,6 +82,7 @@ static const syscall_handler handlers[SYSCALL_COUNT] = {
     [SYSCALL_DEVICE_RESET] = syscall_device_reset,
     [SYSCALL_SERIAL_WRITE] = syscall_serial_write,
     [SYSCALL_SERIAL_READ] = syscall_serial_read,
+    [SYSCALL_SYSTEM_POWER] = syscall_system_power,
 };
 
 struct syscall_result syscall_dispatch(struct process *caller, const struct syscall_request *request)

@@ -22,6 +22,7 @@ class BootRequest:
     arguments: str | None = None
     drives: tuple[Drive, ...] = ()
     entropy: bool = False
+    network: tuple[str, ...] = ()
 
 
 def machine_arguments(
@@ -74,6 +75,7 @@ def boot_command(profile: Profile, toolchain: Toolchain, request: BootRequest) -
         command.extend(drive_arguments(drive))
     if request.entropy:
         command.extend(ENTROPY_ARGUMENTS)
+    command.extend(request.network)
     return command
 
 

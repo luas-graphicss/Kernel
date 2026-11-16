@@ -11,6 +11,8 @@ Os drivers são processos em U-mode que o `init` inicia a partir do manifesto em
 
 O serviço de arquivos está em `specs/filesystem/file-service.md`.
 
+Quando o boot recebe `init=kernel_services.manager.main`, quem inicia estes serviços é o gerente do sistema, com a prioridade, o heap e a política de reinício da configuração. Ele inicia também o serviço de rede, `kernel_services.network.main`, que recebe o dispositivo VirtIO de modelo 1 e traz o driver dentro do próprio processo. O gerente está em `specs/system/control-service.md` e a rede em `specs/network/`. O ciclo de vida abaixo vale para os dois casos.
+
 ## Ciclo de vida
 
 As operações 1 a 15 são do ciclo de vida, iguais em todos os serviços. As de cada serviço começam em 16.

@@ -60,5 +60,6 @@ struct syscall_result syscall_device_wait(struct process *caller, const uint64_t
 struct syscall_result syscall_device_reset(struct process *caller, const uint64_t *arguments);
 struct syscall_result syscall_serial_write(struct process *caller, const uint64_t *arguments);
 struct syscall_result syscall_serial_read(struct process *caller, const uint64_t *arguments);
+struct syscall_result syscall_system_power(struct process *caller, const uint64_t *arguments);
 
 #endif

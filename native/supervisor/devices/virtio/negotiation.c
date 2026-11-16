@@ -7,7 +7,7 @@
 #define FEATURE_WORD_BITS 32u
 #define FEATURE_WORD_MASK 0xffffffffull
 #define RESET_POLL_LIMIT 100000u
-#define REQUEST_QUEUE 0u
+#define FIRST_QUEUE 0u
 
 static void add_status(uintptr_t device, uint32_t bits)
 {
@@ -76,18 +76,35 @@ int64_t virtio_handshake_negotiate(uintptr_t device, uint64_t wanted, uint64_t *
     return KERNEL_OK;
 }
 
-int64_t virtio_handshake_attach_queue(uintptr_t device, const struct virtio_queue *queue)
+static bool attach_queue(uintptr_t device, const struct virtio_queue *queue)
 {
-    virtio_mmio_write(device, VIRTIO_MMIO_QUEUE_SELECT, REQUEST_QUEUE);
     if (virtio_mmio_read(device, VIRTIO_MMIO_QUEUE_READY) != 0 ||
         virtio_mmio_read(device, VIRTIO_MMIO_QUEUE_SIZE_MAX) < VIRTIO_QUEUE_SIZE) {
-        return refuse(device);
+        return false;
     }
     virtio_mmio_write(device, VIRTIO_MMIO_QUEUE_SIZE, VIRTIO_QUEUE_SIZE);
     write_area(device, VIRTIO_MMIO_QUEUE_DESCRIPTOR_LOW, virtio_queue_descriptor_area(queue));
     write_area(device, VIRTIO_MMIO_QUEUE_DRIVER_LOW, virtio_queue_driver_area(queue));
     write_area(device, VIRTIO_MMIO_QUEUE_DEVICE_LOW, virtio_queue_device_area(queue));
     virtio_mmio_write(device, VIRTIO_MMIO_QUEUE_READY, 1);
+    return true;
+}
+
+int64_t virtio_handshake_attach_queues(uintptr_t device, const struct virtio_queue *queues,
+                                       uint32_t capacity, uint32_t *attached)
+{
+    *attached = 0;
+    for (uint32_t index = 0; index < capacity; index++) {
+        virtio_mmio_write(device, VIRTIO_MMIO_QUEUE_SELECT, index);
+        if (index != FIRST_QUEUE && virtio_mmio_read(device, VIRTIO_MMIO_QUEUE_SIZE_MAX) == 0) {
+            break;
+        }
+        if (!attach_queue(device, &queues[index])) {
+            *attached = 0;
+            return refuse(device);
+        }
+        (*attached)++;
+    }
     return KERNEL_OK;
 }
 

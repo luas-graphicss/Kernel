@@ -18,7 +18,7 @@ POLICY_FROZEN := $(RUNTIME_BUILD)/supervisor/frozen/policy/frozen_content.o
 
 CLIENT_INPUTS := $(shell find src/kernel_client src/kernel_drivers src/kernel_protocol -name '*.py' | LC_ALL=C sort)
 INIT_MANIFEST := $(RUNTIME_PORT)/user/manifest.py
-INIT_INPUTS := $(CLIENT_INPUTS) $(shell find src/kernel_services -name '*.py' | LC_ALL=C sort)
+INIT_INPUTS := $(CLIENT_INPUTS) $(shell find src/kernel_services src/kernel_apps -name '*.py' | LC_ALL=C sort)
 INIT_FROZEN := $(RUNTIME_BUILD)/user/frozen/init/frozen_content.o
 
 runtime_make = +$(MAKE) --no-print-directory -C $(RUNTIME_PORT)/$(2) $(1) \

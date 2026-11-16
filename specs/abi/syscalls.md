@@ -54,10 +54,11 @@ O supervisor não confia em quem chama nem na biblioteca cliente:
 | 27 | `device_reset` | `a0`: dispositivo | 0 |
 | 28 | `serial_write` | `a0`: dispositivo, `a1`: endereço do buffer, `a2`: comprimento | Bytes aceitos |
 | 29 | `serial_read` | `a0`: dispositivo, `a1`: endereço do buffer, `a2`: capacidade, `a3`: deadline | Bytes lidos |
+| 30 | `system_power` | `a0`: capability do sistema, `a1`: ação | 0 |
 
 Qualquer outro número devolve `-UNSUPPORTED`.
 
-As chamadas 4 a 7 estão descritas em `capabilities.md`, as chamadas 8 a 12 em `messages.md`, as chamadas 13 a 15 em `buffers.md`, as chamadas 16 a 20 em `processes.md` e as chamadas 21 a 29 em `devices.md`.
+As chamadas 4 a 7 estão descritas em `capabilities.md`, as chamadas 8 a 12 em `messages.md`, as chamadas 13 a 15 em `buffers.md`, as chamadas 16 a 20 em `processes.md` e as chamadas 21 a 29 em `devices.md`. A chamada 30 está descrita abaixo.
 
 ## Processo e tempo
 
@@ -82,6 +83,17 @@ Devolve o tempo monotônico desde o boot, em nanossegundos. O valor vem do conta
 ### `process_yield`
 
 Devolve o processador. O processo continua pronto e volta para o fim da fila da sua prioridade.
+
+### `system_power`
+
+Registra o que o supervisor pede ao firmware quando o sistema terminar: desligar, com a ação 0, ou reiniciar, com a ação 1.
+
+- Exige `ADMIN` na capability do sistema. Outro tipo de objeto devolve `-INVALID_HANDLE`; falta do direito, `-ACCESS_DENIED`.
+- Ação diferente de 0 e de 1: `-INVALID_ARGUMENT`, e nada muda.
+
+A chamada volta na hora e não encerra nenhum processo. O sistema termina quando o último processo de usuário sai, como antes. Nesse momento, se o término foi bem-sucedido e a ação registrada é reiniciar, o supervisor escreve `kernel: power=restart` antes de `kernel: status=ok` e pede um reboot a frio pela extensão de reset do SBI. Em qualquer outro caso ele pede o desligamento. Sem nenhuma chamada a ação é desligar.
+
+A sequência que leva até aqui, com a parada das aplicações e dos serviços, é do gerente do sistema e está em `specs/system/control-service.md`.
 
 ## Traps que não são syscall
 

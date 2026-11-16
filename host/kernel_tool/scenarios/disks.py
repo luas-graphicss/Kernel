@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from kernel_services.filesystem.format.layout import BLOCK_BYTES
-from kernel_tool.build.native import BuildOutputs
 from kernel_tool.corpus import recipes
 from kernel_tool.outcome import CheckError
 from kernel_tool.qemu.drives import Drive, FileDrive, FlushFailingDrive, StalledDrive, TracedDrive
@@ -37,11 +36,11 @@ def write_log_file(directory: Path) -> Path:
     return directory / WRITE_LOG
 
 
-def prepare_machine(devices: Devices, outputs: BuildOutputs, directory: Path) -> Machine:
+def prepare_machine(devices: Devices, boot_image: Path, directory: Path) -> Machine:
     drives: list[Drive] = []
     data_image = None
     if devices.boot:
-        drives.append(FileDrive(BOOT_IDENTITY, outputs.boot_image, read_only=True))
+        drives.append(FileDrive(BOOT_IDENTITY, boot_image, read_only=True))
     if devices.data is not None:
         data_image = directory / DATA_IMAGE
         _write_data_image(devices.data.source, data_image)

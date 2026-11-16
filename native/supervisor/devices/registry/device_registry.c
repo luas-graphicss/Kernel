@@ -131,23 +131,31 @@ static void add_serial(const struct boot_environment *environment,
     add_device(DEVICE_SERIAL_SLOT, DEVICE_KIND_SERIAL, serial->interrupt, serial_interrupt);
 }
 
+static void *queue_memory(void)
+{
+    uint64_t frame;
+
+    if (frame_pool_allocate(physical_memory_pool(), QUEUE_FRAME_ORDER, FRAME_FOR_SUPERVISOR,
+                            &frame) != FRAME_OK) {
+        kernel_panic("device-queue-memory");
+    }
+    return (void *)(uintptr_t)frame;
+}
+
 static void add_transport(const struct boot_environment *environment,
                           const struct device_description *transport, uint32_t index)
 {
     struct memory_range registers = {.base = transport->registers.base, .length = PAGE_BYTES};
-    uint64_t queue;
 
     if (transport->registers.length < VIRTIO_MMIO_REGISTER_BYTES ||
         !is_isolated(environment, registers) || !kernel_space_map_device(registers) ||
         virtio_device_identify((uintptr_t)registers.base) == 0) {
         return;
     }
-    if (frame_pool_allocate(physical_memory_pool(), QUEUE_FRAME_ORDER, FRAME_FOR_SUPERVISOR,
-                            &queue) != FRAME_OK) {
-        kernel_panic("device-queue-memory");
+    virtio_device_attach(&slots[index].virtio, (uintptr_t)registers.base, queue_memory());
+    for (uint32_t queue = 1; queue < DEVICE_QUEUES; queue++) {
+        virtio_device_add_queue(&slots[index].virtio, queue_memory());
     }
-    virtio_device_attach(&slots[index].virtio, (uintptr_t)registers.base,
-                         (void *)(uintptr_t)queue);
     add_device(index, DEVICE_KIND_VIRTIO, transport->interrupt, transport_interrupt);
 }
 

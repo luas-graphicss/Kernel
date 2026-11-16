@@ -71,6 +71,7 @@ NATIVE_C_SOURCES := \
 	native/supervisor/processes/syscall_device.c \
 	native/supervisor/processes/syscall_ipc.c \
 	native/supervisor/processes/syscall_memory.c \
+	native/supervisor/processes/syscall_power.c \
 	native/supervisor/processes/syscall_process.c \
 	native/supervisor/processes/user_image.c \
 	native/supervisor/processes/wait.c \

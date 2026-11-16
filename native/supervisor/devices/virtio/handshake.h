@@ -8,7 +8,8 @@
 
 bool virtio_handshake_reset(uintptr_t device);
 int64_t virtio_handshake_negotiate(uintptr_t device, uint64_t wanted, uint64_t *accepted);
-int64_t virtio_handshake_attach_queue(uintptr_t device, const struct virtio_queue *queue);
+int64_t virtio_handshake_attach_queues(uintptr_t device, const struct virtio_queue *queues,
+                                       uint32_t capacity, uint32_t *attached);
 void virtio_handshake_start(uintptr_t device);
 
 #endif

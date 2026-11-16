@@ -49,6 +49,6 @@ A proteção vale para os dispositivos do perfil: `virtio-blk`, `virtio-rng` e a
 
 ## Hipóteses a confirmar
 
-- Uma fila basta até a rede chegar. O `virtio-net` usa duas, e o pedido já carrega o número da fila, hoje sempre zero.
+- Uma fila bastou até a rede chegar. O `virtio-net` usa duas, e desde o ADR 0009 o supervisor programa até duas filas por dispositivo, com o limite de quatro pedidos valendo para cada uma.
 - O limite de leituras à espera da confirmação do reset serve fora do QEMU. Ele é uma contagem, não um tempo.
 - Quatro pedidos em andamento não limitam o serviço de arquivos, que hoje faz um pedido por vez.

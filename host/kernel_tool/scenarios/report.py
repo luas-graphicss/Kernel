@@ -11,6 +11,11 @@ def format_result(result: ScenarioResult) -> str:
         f"{verdict} {result.name} runs={result.runs} seconds={result.duration_seconds:.1f} "
         f"image={result.image} sha256={result.image_sha256}"
     ]
+    if result.network is not None:
+        lines.append(
+            f"  network: peer={result.network.peer_stack!r} "
+            f"frames={result.network.captured_frames} capture={result.network.capture}"
+        )
     if not result.passed:
         lines.extend(f"  failure: {failure}" for failure in result.failures)
         lines.extend(f"  | {line}" for line in result.transcript)

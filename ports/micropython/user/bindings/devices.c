@@ -10,6 +10,8 @@
 #define WORD_BYTES 4u
 #define DOUBLE_WORD_BYTES 8u
 #define SEGMENT_FIELDS 4u
+#define SUBMIT_ARGUMENTS_MIN 2
+#define SUBMIT_ARGUMENTS_MAX 3
 #define WORD_MAX 0xffffffffll
 
 static mp_obj_t field(const uint8_t *bytes, size_t offset, size_t width)
@@ -79,6 +81,7 @@ static mp_obj_t process_device_open_binding(mp_obj_t device, mp_obj_t features)
         field(session, DEVICE_SESSION_FEATURES, DOUBLE_WORD_BYTES),
         field(session, DEVICE_SESSION_GENERATION, DOUBLE_WORD_BYTES),
         field(session, DEVICE_SESSION_QUEUE_SIZE, WORD_BYTES),
+        field(session, DEVICE_SESSION_QUEUES, WORD_BYTES),
     };
     return mp_obj_new_tuple(MP_ARRAY_SIZE(items), items);
 }
@@ -102,15 +105,21 @@ static mp_obj_t process_device_config_binding(mp_obj_t device, mp_obj_t offset, 
 }
 MP_DEFINE_CONST_FUN_OBJ_3(process_device_config_obj, process_device_config_binding);
 
-static mp_obj_t process_device_submit_binding(mp_obj_t device, mp_obj_t described)
+static mp_obj_t process_device_submit_binding(size_t given, const mp_obj_t *arguments)
 {
     uint8_t request[DEVICE_REQUEST_BYTES] = {0};
+    mp_obj_t device = arguments[0];
+    mp_obj_t described = arguments[1];
     mp_obj_t *segments;
     size_t count;
 
     mp_obj_get_array(described, &count, &segments);
     if (count > DEVICE_SEGMENTS) {
         mp_raise_ValueError(MP_ERROR_TEXT("too many segments in a device request"));
+    }
+    if (given > SUBMIT_ARGUMENTS_MIN) {
+        little_endian_write(request + DEVICE_REQUEST_QUEUE, WORD_BYTES,
+                            word_argument(arguments[SUBMIT_ARGUMENTS_MIN]));
     }
     little_endian_write(request + DEVICE_REQUEST_SEGMENT_COUNT, WORD_BYTES, count);
     for (size_t index = 0; index < count; index++) {
@@ -120,7 +129,8 @@ static mp_obj_t process_device_submit_binding(mp_obj_t device, mp_obj_t describe
     return binding_signed(
         process_call(binding_argument(device), (long)request, 0, 0, 0, 0, SYSCALL_DEVICE_SUBMIT));
 }
-MP_DEFINE_CONST_FUN_OBJ_2(process_device_submit_obj, process_device_submit_binding);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(process_device_submit_obj, SUBMIT_ARGUMENTS_MIN,
+                                    SUBMIT_ARGUMENTS_MAX, process_device_submit_binding);
 
 static mp_obj_t process_device_wait_binding(mp_obj_t device, mp_obj_t deadline)
 {

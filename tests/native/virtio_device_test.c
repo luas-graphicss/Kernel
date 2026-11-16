@@ -24,6 +24,7 @@
 #define BUFFER_BYTES 4096u
 #define SECTOR_BYTES 512u
 #define CONFIG_READ_ATTEMPTS 4u
+#define REQUEST_QUEUE 0u
 
 static _Alignas(VIRTIO_QUEUE_BYTES) uint8_t queue_memory[VIRTIO_QUEUE_BYTES];
 static struct virtio_registers registers;
@@ -51,7 +52,7 @@ static int64_t submit(uint32_t offset, uint32_t length, bool device_writes)
 {
     const struct virtio_transfer transfer = {buffer, offset, length, device_writes};
 
-    return virtio_device_submit(&device, &transfer, 1);
+    return virtio_device_submit(&device, REQUEST_QUEUE, &transfer, 1);
 }
 
 static int64_t submit_read(void)
@@ -112,9 +113,9 @@ static void test_open_negotiates_in_the_required_order(void)
     CHECK(device.features == (VIRTIO_FEATURE_VERSION_1 | FEATURE_FLUSH));
     CHECK(registers.accepted_features == device.features);
     CHECK(registers.queue_size == VIRTIO_QUEUE_SIZE && registers.queue_ready == 1);
-    CHECK(registers.descriptor_area == virtio_queue_descriptor_area(&device.queue));
-    CHECK(registers.driver_area == virtio_queue_driver_area(&device.queue));
-    CHECK(registers.device_area == virtio_queue_device_area(&device.queue));
+    CHECK(registers.descriptor_area == virtio_queue_descriptor_area(&device.queues[REQUEST_QUEUE]));
+    CHECK(registers.driver_area == virtio_queue_driver_area(&device.queues[REQUEST_QUEUE]));
+    CHECK(registers.device_area == virtio_queue_device_area(&device.queues[REQUEST_QUEUE]));
     CHECK(device.state == DEVICE_STATE_READY);
     CHECK(virtio_device_open(&device, FEATURE_FLUSH) == -KERNEL_ERROR_BAD_STATE);
 }
@@ -197,12 +198,12 @@ static void test_requests_outside_their_buffers_are_refused_without_pins(void)
     CHECK(submit(0, BUFFER_BYTES + 1u, true) == -KERNEL_ERROR_INVALID_ARGUMENT);
     CHECK(submit(UINT32_MAX, UINT32_MAX, true) == -KERNEL_ERROR_INVALID_ARGUMENT);
     CHECK(submit(0, 0, false) == -KERNEL_ERROR_INVALID_ARGUMENT);
-    CHECK(virtio_device_submit(&device, &unknown_buffer, 1) == -KERNEL_ERROR_INVALID_ARGUMENT);
-    CHECK(virtio_device_submit(&device, second_outside, 0) == -KERNEL_ERROR_INVALID_ARGUMENT);
-    CHECK(virtio_device_submit(&device, second_outside, DEVICE_SEGMENTS + 1u) ==
+    CHECK(virtio_device_submit(&device, REQUEST_QUEUE, &unknown_buffer, 1) == -KERNEL_ERROR_INVALID_ARGUMENT);
+    CHECK(virtio_device_submit(&device, REQUEST_QUEUE, second_outside, 0) == -KERNEL_ERROR_INVALID_ARGUMENT);
+    CHECK(virtio_device_submit(&device, REQUEST_QUEUE, second_outside, DEVICE_SEGMENTS + 1u) ==
           -KERNEL_ERROR_INVALID_ARGUMENT);
-    CHECK(virtio_device_submit(&device, second_outside, 2) == -KERNEL_ERROR_INVALID_ARGUMENT);
-    CHECK(virtio_device_submit(&device, readable_after_writable, 2) ==
+    CHECK(virtio_device_submit(&device, REQUEST_QUEUE, second_outside, 2) == -KERNEL_ERROR_INVALID_ARGUMENT);
+    CHECK(virtio_device_submit(&device, REQUEST_QUEUE, readable_after_writable, 2) ==
           -KERNEL_ERROR_INVALID_ARGUMENT);
     CHECK(pinned_buffers_pins(buffer) == 0 && registers.notifications == 0);
     CHECK(virtio_device_in_flight(&device) == 0 && virtqueue_peer_available(&peer) == 0);

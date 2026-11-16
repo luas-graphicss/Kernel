@@ -1,3 +1,19 @@
 [[file]]
 path = "system/license"
 source = "LICENSE"
+
+[[file]]
+path = "system/config"
+source = "config/system/system.conf"
+
+[[file]]
+path = "apps/sysinfo.py"
+source = "apps/sysinfo.py"
+
+[[file]]
+path = "apps/wordcount.py"
+source = "apps/wordcount.py"
+
+[[file]]
+path = "apps/fetch.py"
+source = "apps/fetch.py"

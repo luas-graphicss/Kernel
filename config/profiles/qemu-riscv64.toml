@@ -35,3 +35,4 @@ ipc_pending_bytes_global = 16777216
 boot_seconds = 60
 selftest_seconds = 600
 soak_seconds = 900
+session_seconds = 300

@@ -5,5 +5,6 @@
 
 #define MICROPY_HW_BOARD_NAME "kernel-supervisor"
 #define MICROPY_HW_MCU_NAME "rv64imac"
+#define MICROPY_ENABLE_COMPILER (0)
 
 #endif

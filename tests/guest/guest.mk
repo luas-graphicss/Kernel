@@ -36,7 +36,7 @@ probe_variables = \
 
 TESTS_MANIFEST := $(GUEST_TESTS)/programs/manifest.py
 TESTS_INPUTS := \
-	$(CLIENT_INPUTS) \
+	$(INIT_INPUTS) \
 	$(GUEST_TESTS)/runtime_selftest/__init__.py $(GUEST_TESTS)/runtime_selftest/checks.py \
 	$(shell find $(GUEST_TESTS)/programs -name '*.py' | LC_ALL=C sort)
 TESTS_FROZEN := $(RUNTIME_BUILD)/probe/frozen/tests/frozen_content.o

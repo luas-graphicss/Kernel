@@ -2,6 +2,8 @@
 
 Cada requisito tem a fase em que é entregue pela primeira vez e a evidência que permite marcá-lo como aceito. Sem a evidência, o requisito continua aberto.
 
+Esta página fala de requisitos. O estado de cada syscall, de cada operação de serviço e de cada comando do shell, com o caso de teste que o exercita, está em `api-conformance.md`. Os resultados das execuções de aceite ficam em `docs/acceptance/`.
+
 | ID | Requisito | Fase | Evidência de aceite |
 | --- | --- | --- | --- |
 | R-01 | A imagem inicia pelo OpenSBI fixado, sem kernel convidado e sem semihosting | 1 | Cenário `boot` de `kernel-tool test --suite bootstrap`; `kernel-tool verify-artifacts` confirma ELF estático, sem símbolo indefinido |
@@ -20,8 +22,8 @@ Cada requisito tem a fase em que é entregue pela primeira vez e a evidência qu
 | R-14 | Processos preemptivos com contexto completo, incluindo FP | 2 | Suíte `processes`: laço sem cooperação preemptado e encerrado, registradores inteiros e FP preservados entre processos |
 | R-15 | Capabilities, IPC e cotas aplicados pelo supervisor | 2 | Suítes `capabilities` e `ipc`; `tests/native/message_test.c` |
 | R-16 | Hard IRQ sem Python, timer e GC seguro | 1 e 2 | Caminho do timer descrito no ADR 0004; cenários `supervisor-trap` e `runtime-trap`; coleta intensiva preemptada na suíte `processes`; interrupções externas atendidas só por tratadores nativos, em `specs/abi/devices.md`. A medição de pausas continua aberta |
-| R-17 | DMA mediado, VirtIO e reset de dispositivo | 3 para bloco, entropia e console; rede na 4 | Suíte `devices`; `kernel-tool fault-test --suite device-reset`; `tests/native/virtio_queue_test.c` e `virtio_device_test.c` |
+| R-17 | DMA mediado, VirtIO e reset de dispositivo | 3 para bloco, entropia e console; rede na 4 | Suíte `devices`; `kernel-tool fault-test --suite device-reset`; `tests/native/virtio_queue_test.c` e `virtio_device_test.c`. Para o `virtio-net`, suíte `network` e o caso `device-reset` de `kernel-tool fault-test --suite network-faults` |
 | R-18 | VFS e volume persistente com contrato de `fsync` | 3 | Suítes `vfs` e `storage`; `kernel-tool fault-test --suite storage-crash`, com a matriz de crash, 1.000 sequências geradas e o replay do log de escritas; `kernel-tool verify-filesystem --corpus tests/faults/storage`; `tests/conformance/test_filesystem_*.py` |
-| R-19 | Rede IPv4, ICMP, UDP e TCP | 4 | Interoperabilidade e fuzzing dos parsers |
-| R-20 | Shell, configuração e supervisão de serviços | 2 a 4 | Jornada operacional no convidado |
+| R-19 | Rede IPv4, ICMP, UDP e TCP | 4 | Suíte `network`; suíte `network-interop`, com transferências nos dois sentidos conferidas por hash contra a pilha TCP/IP do Linux, em enlace limpo e em enlace com perda, duplicação e reordenação; `kernel-tool fault-test --suite network-faults`, com 31 espécimes malformados, 32 pedidos de conexão forjados, enlace caído e reset do dispositivo; `tests/conformance/test_network_link.py`, `test_network_reassembly.py`, `test_network_tcp.py` e `test_network_malformed.py`. Resultados em `docs/acceptance/network-and-operational-environment.md`. O fuzzing dos parsers continua aberto e fica para a homologação |
+| R-20 | Shell, configuração e supervisão de serviços | 2 a 4 | Suítes `applications`, `supervision` e `system-journey`, esta com dois boots sobre o mesmo volume; `tests/conformance/test_configuration.py`, `test_service_supervision.py`, `test_control_protocol.py` e `test_shell_words.py`. Cada comando e cada operação tem a sua linha em `api-conformance.md` |
 | R-21 | Proveniência, licenças e distribuição | Base na 1, encerramento na 5 | Inventário de versões, hashes e SPDX |

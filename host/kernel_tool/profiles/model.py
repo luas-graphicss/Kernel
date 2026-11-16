@@ -43,6 +43,7 @@ class Deadlines:
     boot_seconds: int
     selftest_seconds: int
     soak_seconds: int
+    session_seconds: int
 
 
 @dataclass(frozen=True, slots=True)

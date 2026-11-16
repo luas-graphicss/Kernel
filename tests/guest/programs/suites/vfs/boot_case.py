@@ -25,8 +25,9 @@ def check_content(checks: Checks, namespace: files.Namespace) -> None:
         "the root of the namespace lists the mounts",
     )
     checks.require(
-        names(namespace, b"boot") == [b"system"]
-        and names(namespace, b"boot/system") == [b"license", b"release"],
+        names(namespace, b"boot") == [b"apps", b"system"]
+        and names(namespace, b"boot/apps") == [b"fetch.py", b"sysinfo.py", b"wordcount.py"]
+        and names(namespace, b"boot/system") == [b"config", b"license", b"release"],
         "the boot image lists the files of its manifest",
     )
     checks.require(
