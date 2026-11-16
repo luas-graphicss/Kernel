@@ -6,5 +6,6 @@
 void *memcpy(void *restrict destination, const void *restrict source, size_t length);
 void *memset(void *destination, int value, size_t length);
 size_t strlen(const char *text);
+int strcmp(const char *first, const char *second);
 
 #endif

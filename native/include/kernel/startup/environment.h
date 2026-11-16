@@ -17,6 +17,7 @@ struct boot_environment {
 };
 
 const struct boot_environment *boot_environment_load(uint64_t hart, const void *device_tree_blob);
+const struct boot_environment *boot_environment_current(void);
 _Noreturn void supervisor_main(uint64_t hart, const void *device_tree_blob);
 
 #endif

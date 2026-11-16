@@ -147,3 +147,8 @@ const struct boot_environment *boot_environment_load(uint64_t hart, const void *
     report();
     return &environment;
 }
+
+const struct boot_environment *boot_environment_current(void)
+{
+    return &environment;
+}
