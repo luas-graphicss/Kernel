@@ -42,10 +42,12 @@ def test_reference_profile_matches_the_platform_contract() -> None:
         ("memory_mib = 256", "memory_mib = 128", "bytes of memory"),
         ("user_heap_bytes = 0x100000", "user_heap_bytes = 0x800000", "heap limit of a process"),
         (
-            "[deadlines]\nboot_seconds = 60\nselftest_seconds = 600\nsoak_seconds = 900\n",
+            "[deadlines]\nboot_seconds = 60\nselftest_seconds = 600\nsoak_seconds = 900\n"
+            "session_seconds = 300\n",
             "",
             r"missing the \[deadlines\] table",
         ),
+        ("session_seconds = 300\n", "", r"\[deadlines\] is missing session_seconds"),
         ("selftest_seconds = 600\n", "", r"\[deadlines\] is missing selftest_seconds"),
         ("soak_seconds = 900\n", "", r"\[deadlines\] is missing soak_seconds"),
         ('name = "qemu-riscv64"', 'name = "other"', "name must be"),

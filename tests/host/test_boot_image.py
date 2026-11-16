@@ -145,7 +145,7 @@ def test_a_manifest_that_leaves_the_repository_or_is_malformed_is_refused(
         load_files(root)
 
 
-def test_the_boot_image_of_the_repository_holds_the_license_and_the_release(
+def test_the_boot_image_of_the_repository_holds_the_system_files_and_the_programs(
     tmp_path: Path,
 ) -> None:
     output = tmp_path / "boot.img"
@@ -153,6 +153,15 @@ def test_the_boot_image_of_the_repository_holds_the_license_and_the_release(
     write_boot_image(REPOSITORY, load_lock(REPOSITORY / "toolchain.lock.toml"), output)
     files = read_image(output.read_bytes(), RUNTIME)
 
-    assert set(files) == {"system/license", RELEASE_PATH}
+    assert set(files) == {
+        "system/license",
+        "system/config",
+        "apps/fetch.py",
+        "apps/sysinfo.py",
+        "apps/wordcount.py",
+        RELEASE_PATH,
+    }
     assert files["system/license"] == (REPOSITORY / "LICENSE").read_bytes()
+    assert files["system/config"] == (REPOSITORY / "config/system/system.conf").read_bytes()
+    assert files["apps/sysinfo.py"] == (REPOSITORY / "apps/sysinfo.py").read_bytes()
     assert files[RELEASE_PATH] == release_file(RUNTIME).content

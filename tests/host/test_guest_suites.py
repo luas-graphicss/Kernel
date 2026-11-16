@@ -9,6 +9,8 @@ from kernel_tool.scenarios.evaluation import check_transcript
 from kernel_tool.scenarios.fault_suites import FAULT_SUITES
 from kernel_tool.scenarios.guest_suites import CASES, CYCLES_CASE, GUEST_SUITES, MEASURED_CYCLES
 from kernel_tool.scenarios.model import BootModule, Deadline, Image, Scenario
+from kernel_tool.scenarios.network_suites import NETWORK_SUITES
+from kernel_tool.scenarios.system_suites import SUPERVISION_SCENARIO, SYSTEM_SUITES
 from kernel_tool.verification.transcript import read_transcript
 
 REPOSITORY = Path(__file__).resolve().parents[2]
@@ -29,6 +31,9 @@ TESTS_IMAGE_PROGRAMS = {
     "suites.devices.main",
     "suites.ipc.main",
     "suites.memory.main",
+    "suites.network.faults",
+    "suites.network.interop",
+    "suites.network.main",
     "suites.processes.cycles",
     "suites.processes.main",
     "suites.scheduling.main",
@@ -37,6 +42,7 @@ TESTS_IMAGE_PROGRAMS = {
     "suites.storage.main",
     "suites.storage.reader",
     "suites.storage.writer",
+    "suites.supervision.main",
     "suites.vfs.main",
 }
 INIT_OPTION = "init="
@@ -81,7 +87,12 @@ def scenario(suite: str, name: str) -> Scenario:
 
 
 def every_scenario() -> list[Scenario]:
-    suites = (*GUEST_SUITES.values(), *FAULT_SUITES.values())
+    suites = (
+        *GUEST_SUITES.values(),
+        *FAULT_SUITES.values(),
+        *NETWORK_SUITES.values(),
+        (SUPERVISION_SCENARIO,),
+    )
     return [candidate for scenarios in suites for candidate in scenarios]
 
 
@@ -122,7 +133,7 @@ def failures(candidate: Scenario, serial_output: str) -> list[str]:
 
 def test_every_required_suite_is_registered_next_to_bootstrap() -> None:
     assert set(GUEST_SUITES) == REQUIRED
-    assert set(SUITES) == REQUIRED | {"bootstrap"}
+    assert set(SUITES) == REQUIRED | {"bootstrap"} | set(NETWORK_SUITES) | set(SYSTEM_SUITES)
     for name in REQUIRED:
         assert SUITES[name] is GUEST_SUITES[name]
 
@@ -189,7 +200,7 @@ def test_cycles_run_under_the_soak_deadline_and_report_how_many_completed() -> N
     assert f"MEASURED_CYCLES = {MEASURED_CYCLES}\n" in source
     assert any(f"completed={MEASURED_CYCLES} " in pattern for pattern in cycles.expected_lines)
     assert all(
-        candidate.deadline is Deadline.BOOT
+        candidate.deadline is (Deadline.BOOT if candidate.network is None else Deadline.SESSION)
         for candidate in every_scenario()
         if candidate is not cycles
     )

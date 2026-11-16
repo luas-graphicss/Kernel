@@ -5,6 +5,7 @@ import pytest
 
 from kernel_tool.commands.fault_test import DEFAULT_SEQUENCES
 from kernel_tool.commands.test import SUITES
+from kernel_tool.faults.injection import injection_stage
 from kernel_tool.faults.stages import (
     REPORTED_FAILURES,
     Stage,
@@ -31,6 +32,7 @@ from kernel_tool.scenarios.model import (
     Devices,
     Scenario,
 )
+from kernel_tool.scenarios.network_suites import FAULTS, FLOOD_REQUESTS, MALFORMED_FRAMES
 from kernel_tool.verification.transcript import read_transcript
 
 REPOSITORY = Path(__file__).resolve().parents[2]
@@ -76,8 +78,8 @@ def declared_transactions() -> int:
 
 
 def test_fault_suites_are_registered_apart_from_the_test_suites() -> None:
-    assert set(FAULT_SUITES) == {"device-reset", "storage-crash"}
-    assert {DEVICE_RESET, STORAGE_CRASH} == set(FAULT_SUITES)
+    assert set(FAULT_SUITES) == {"device-reset", "storage-crash", "network-faults"}
+    assert {DEVICE_RESET, STORAGE_CRASH, FAULTS} == set(FAULT_SUITES)
     assert not set(FAULT_SUITES) & set(SUITES)
     assert DEFAULT_SEQUENCES >= REQUIRED_SEQUENCES
 
@@ -144,3 +146,16 @@ def test_the_sequence_stage_records_the_seeds_it_ran() -> None:
 def test_the_trace_stage_needs_the_log_of_the_traced_scenario(tmp_path: Path) -> None:
     with pytest.raises(CheckError, match="did not run"):
         trace_stage(tmp_path, ())
+
+
+def test_the_network_fault_report_lists_every_injected_specimen() -> None:
+    stage = injection_stage()
+    evidence = stage.evidence
+
+    assert stage.passed
+    assert isinstance(evidence, list)
+    assert stage.counts["specimens"] == len(evidence)
+    assert stage.counts["frames"] == len(MALFORMED_FRAMES)
+    assert stage.counts["parsers"] == 7
+    assert stage.counts["connection-requests"] == FLOOD_REQUESTS
+    assert {"name", "parser", "counter", "frames"} == set(evidence[0])

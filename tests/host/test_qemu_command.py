@@ -128,3 +128,19 @@ def test_device_tree_dump_uses_the_reference_machine_without_booting() -> None:
     assert option_value(command, "-cpu") == "rv64,h=off,v=off"
     assert "-kernel" not in command
     assert "-serial" not in command
+
+
+def test_boot_command_attaches_the_network_after_every_other_device() -> None:
+    profile = load_profile(REPOSITORY, DEFAULT_PROFILE)
+    network = ("-netdev", "dgram,id=net0", "-device", "virtio-net-device,netdev=net0")
+    request = BootRequest(
+        kernel=Path("/build/kernel.elf"), memory_mib=256, entropy=True, network=network
+    )
+
+    command = boot_command(profile, reference_toolchain(), request)
+
+    assert tuple(command[-len(network) :]) == network
+    assert option_values(command, "-device") == [
+        "virtio-rng-device,rng=entropy",
+        "virtio-net-device,netdev=net0",
+    ]

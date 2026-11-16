@@ -52,7 +52,7 @@ def outputs(directory: Path) -> BuildOutputs:
 
 
 def prepare(devices: Devices, directory: Path) -> Machine:
-    return prepare_machine(devices, outputs(directory), directory)
+    return prepare_machine(devices, outputs(directory).boot_image, directory)
 
 
 def prepare_data(data: DataDisk, directory: Path) -> Machine:
