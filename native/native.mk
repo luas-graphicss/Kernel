@@ -25,25 +25,55 @@ NATIVE_CFLAGS := \
 NATIVE_C_SOURCES := \
 	native/arch/riscv64/sbi/sbi.c \
 	native/arch/riscv64/traps/trap.c \
+	native/supervisor/capabilities/capability_space.c \
 	native/supervisor/devices/device_tree/boot_description.c \
 	native/supervisor/devices/device_tree/container.c \
 	native/supervisor/devices/device_tree/tokens.c \
 	native/supervisor/devices/uart_ns16550.c \
 	native/supervisor/diagnostics/console.c \
+	native/supervisor/diagnostics/counters.c \
 	native/supervisor/diagnostics/halt.c \
+	native/supervisor/events/event_queue.c \
+	native/supervisor/ipc/call.c \
+	native/supervisor/ipc/endpoint.c \
+	native/supervisor/ipc/message.c \
 	native/supervisor/main.c \
+	native/supervisor/memory/address_space.c \
+	native/supervisor/memory/buffer.c \
+	native/supervisor/memory/frame_pool.c \
+	native/supervisor/memory/kernel_space.c \
 	native/supervisor/memory/layout.c \
+	native/supervisor/memory/page_table.c \
+	native/supervisor/memory/physical_memory.c \
 	native/supervisor/memory/range.c \
+	native/supervisor/objects/kernel_objects.c \
+	native/supervisor/objects/object_table.c \
+	native/supervisor/objects/slot_table.c \
+	native/supervisor/processes/lifecycle.c \
+	native/supervisor/processes/process_table.c \
+	native/supervisor/processes/program.c \
+	native/supervisor/processes/run.c \
+	native/supervisor/processes/spawn.c \
+	native/supervisor/processes/spawn_request.c \
+	native/supervisor/processes/supervision.c \
 	native/supervisor/processes/syscall.c \
+	native/supervisor/processes/syscall_capability.c \
+	native/supervisor/processes/syscall_ipc.c \
+	native/supervisor/processes/syscall_memory.c \
+	native/supervisor/processes/syscall_process.c \
 	native/supervisor/processes/user_image.c \
-	native/supervisor/processes/user_process.c \
+	native/supervisor/processes/wait.c \
 	native/supervisor/startup/environment.c \
-	native/supervisor/startup/profile.c
+	native/supervisor/startup/profile.c \
+	native/supervisor/timers/clock.c \
+	native/supervisor/timers/timer.c
 
 NATIVE_ASSEMBLY_SOURCES := \
 	native/arch/riscv64/boot/entry.S \
 	native/arch/riscv64/context/user_context.S \
+	native/arch/riscv64/mmu/mmu.S \
 	native/arch/riscv64/sbi/sbi_call.S \
+	native/arch/riscv64/timer/timer.S \
 	native/arch/riscv64/traps/trap_vector.S
 
 NATIVE_OBJECTS := \

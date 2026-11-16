@@ -31,7 +31,8 @@ struct capability_space {
 };
 
 typedef void (*capability_retain)(void *context, uint64_t object);
-typedef void (*capability_release)(void *context, uint64_t object, uint32_t rights);
+typedef void (*capability_release)(void *context, uint32_t space, uint64_t object,
+                                   uint32_t rights);
 
 struct capability_registry {
     struct capability_space *spaces;
@@ -51,6 +52,8 @@ void capability_space_attach(struct capability_registry *registry, uint32_t spac
 bool capability_space_open(struct capability_registry *registry, uint32_t space, uint32_t limit);
 void capability_space_close(struct capability_registry *registry, uint32_t space);
 uint32_t capability_space_live(const struct capability_registry *registry, uint32_t space);
+bool capability_space_holds(const struct capability_registry *registry, uint32_t space,
+                            uint64_t object, uint32_t rights);
 int64_t capability_install(struct capability_registry *registry, uint32_t space, uint64_t object,
                            uint32_t rights);
 int64_t capability_derive(struct capability_registry *registry, uint32_t space, uint64_t handle,

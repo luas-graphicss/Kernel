@@ -134,7 +134,7 @@ static void remove_entry(struct capability_registry *registry, uint32_t space_in
     }
     slot_table_release(&space->slots, slot_table_handle_at(&space->slots, slot));
     registry->live--;
-    registry->release(registry->context, entry.object, entry.rights);
+    registry->release(registry->context, space_index, entry.object, entry.rights);
 }
 
 static bool descends_from(const struct capability_registry *registry,
@@ -253,6 +253,25 @@ uint32_t capability_space_live(const struct capability_registry *registry, uint3
     const struct capability_space *counted = active_space(registry, space);
 
     return counted == NULL ? 0 : counted->slots.live;
+}
+
+bool capability_space_holds(const struct capability_registry *registry, uint32_t space,
+                            uint64_t object, uint32_t rights)
+{
+    const struct capability_space *searched = active_space(registry, space);
+
+    if (searched == NULL) {
+        return false;
+    }
+    for (uint32_t slot = 0; slot < searched->slots.capacity; slot++) {
+        const struct capability *entry = &searched->entries[slot];
+
+        if (searched->slots.records[slot].occupied && entry->object == object &&
+            (entry->rights & rights) == rights) {
+            return true;
+        }
+    }
+    return false;
 }
 
 int64_t capability_install(struct capability_registry *registry, uint32_t space, uint64_t object,

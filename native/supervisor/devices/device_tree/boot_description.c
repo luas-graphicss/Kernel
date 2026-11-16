@@ -15,6 +15,7 @@ struct open_node {
     bool is_memory;
     bool is_console;
     bool is_chosen;
+    bool is_processors;
     bool holds_reservations;
 };
 
@@ -244,6 +245,10 @@ static enum device_tree_status scan_property(struct boot_scan *scan,
         node->is_console = list_has_text(property, "ns16550a");
         return DEVICE_TREE_OK;
     }
+    if (node->is_processors && text_equals(property->name, "timebase-frequency")) {
+        scan->description->has_timebase = true;
+        return read_address(property, &scan->description->timebase_frequency);
+    }
     if (node->is_chosen) {
         return scan_chosen_property(scan, property);
     }
@@ -261,6 +266,7 @@ static enum device_tree_status scan_begin_node(struct boot_scan *scan, const cha
         .child_address_cells = DEFAULT_ADDRESS_CELLS,
         .child_size_cells = DEFAULT_SIZE_CELLS,
         .is_chosen = is_root_child && text_equals(name, "chosen"),
+        .is_processors = is_root_child && text_equals(name, "cpus"),
         .holds_reservations = is_root_child && text_equals(name, "reserved-memory"),
     };
     scan->depth++;
