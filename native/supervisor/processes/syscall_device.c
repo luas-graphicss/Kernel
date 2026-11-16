@@ -137,6 +137,7 @@ struct syscall_result syscall_device_open(struct process *caller, const uint64_t
     little_endian_write(session + DEVICE_SESSION_GENERATION, DOUBLE_WORD_BYTES,
                         slot->virtio.generation);
     little_endian_write(session + DEVICE_SESSION_QUEUE_SIZE, WORD_BYTES, DEVICE_QUEUE_SIZE);
+    little_endian_write(session + DEVICE_SESSION_QUEUES, WORD_BYTES, slot->virtio.queue_count);
     user_memory_write(&caller->space, arguments[2], session, DEVICE_SESSION_BYTES);
     return syscall_resume(KERNEL_OK);
 }
@@ -171,6 +172,7 @@ struct syscall_result syscall_device_submit(struct process *caller, const uint64
     struct virtio_transfer transfers[DEVICE_SEGMENTS];
     struct device_slot *slot;
     uint64_t count;
+    uint64_t queue;
     int64_t status = require_session(caller, arguments[0], RIGHT_WRITE, &slot);
 
     if (status != KERNEL_OK) {
@@ -180,8 +182,8 @@ struct syscall_result syscall_device_submit(struct process *caller, const uint64
         return syscall_resume(-KERNEL_ERROR_BAD_ADDRESS);
     }
     count = little_endian_read(request + DEVICE_REQUEST_SEGMENT_COUNT, WORD_BYTES);
-    if (little_endian_read(request + DEVICE_REQUEST_QUEUE, WORD_BYTES) != 0 || count == 0 ||
-        count > DEVICE_SEGMENTS) {
+    queue = little_endian_read(request + DEVICE_REQUEST_QUEUE, WORD_BYTES);
+    if (queue >= DEVICE_QUEUES || count == 0 || count > DEVICE_SEGMENTS) {
         return syscall_resume(-KERNEL_ERROR_INVALID_ARGUMENT);
     }
     for (uint32_t index = 0; index < count; index++) {
@@ -192,7 +194,8 @@ struct syscall_result syscall_device_submit(struct process *caller, const uint64
             return syscall_resume(status);
         }
     }
-    return syscall_resume(virtio_device_submit(&slot->virtio, transfers, (uint32_t)count));
+    return syscall_resume(
+        virtio_device_submit(&slot->virtio, (uint32_t)queue, transfers, (uint32_t)count));
 }
 
 struct syscall_result syscall_device_wait(struct process *caller, const uint64_t *arguments)

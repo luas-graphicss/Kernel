@@ -8,7 +8,6 @@
 #include "kernel/memory/buffer_pins.h"
 
 #define CONFIG_READ_ATTEMPTS 4u
-#define REQUEST_QUEUE 0u
 
 static void unpin(struct virtio_pin *pin)
 {
@@ -24,16 +23,36 @@ static void fail(struct virtio_device *device, const char *reason)
     device->failure = reason;
 }
 
-static void complete(struct virtio_device *device, uint32_t chain, uint32_t written)
+static void complete(struct virtio_device *device, uint32_t queue, uint32_t chain,
+                     uint32_t written)
 {
-    uint32_t position = (device->completion_head + device->completion_count) % DEVICE_REQUESTS;
+    uint32_t position = (device->completion_head + device->completion_count) % VIRTIO_COMPLETIONS;
 
     device->completions[position] = (struct virtio_completion){
-        .token = device->pins[chain].token,
+        .token = device->pins[queue][chain].token,
         .written = written,
+        .queue = queue,
     };
     device->completion_count++;
-    unpin(&device->pins[chain]);
+    device->completions_of[queue]++;
+    unpin(&device->pins[queue][chain]);
+}
+
+static bool drain(struct virtio_device *device, uint32_t queue)
+{
+    for (;;) {
+        uint32_t chain = 0;
+        uint32_t written = 0;
+        enum virtio_used used = virtio_queue_take_used(&device->queues[queue], &chain, &written);
+
+        if (used == VIRTIO_USED_EMPTY) {
+            return true;
+        }
+        if (used == VIRTIO_USED_VIOLATION) {
+            return false;
+        }
+        complete(device, queue, chain, written);
+    }
 }
 
 static bool config_is_stable(const struct virtio_device *device, uint32_t offset, uint8_t *bytes,
@@ -63,7 +82,17 @@ void virtio_device_attach(struct virtio_device *device, uintptr_t registers, voi
         .model = virtio_device_identify(registers),
         .state = DEVICE_STATE_CLOSED,
     };
-    virtio_queue_init(&device->queue, queue_memory);
+    virtio_device_add_queue(device, queue_memory);
+}
+
+bool virtio_device_add_queue(struct virtio_device *device, void *queue_memory)
+{
+    if (device->state != DEVICE_STATE_CLOSED || device->queue_capacity == DEVICE_QUEUES) {
+        return false;
+    }
+    virtio_queue_init(&device->queues[device->queue_capacity], queue_memory);
+    device->queue_capacity++;
+    return true;
 }
 
 int64_t virtio_device_open(struct virtio_device *device, uint64_t wanted_features)
@@ -79,7 +108,8 @@ int64_t virtio_device_open(struct virtio_device *device, uint64_t wanted_feature
     }
     status = virtio_handshake_negotiate(device->registers, wanted_features, &device->features);
     if (status == KERNEL_OK) {
-        status = virtio_handshake_attach_queue(device->registers, &device->queue);
+        status = virtio_handshake_attach_queues(device->registers, device->queues,
+                                                device->queue_capacity, &device->queue_count);
     }
     if (status != KERNEL_OK) {
         return status;
@@ -99,10 +129,14 @@ int64_t virtio_device_reset(struct virtio_device *device)
         device->failure = "reset-not-acknowledged";
         return -KERNEL_ERROR_IO_ERROR;
     }
-    for (uint32_t chain = 0; chain < DEVICE_REQUESTS; chain++) {
-        unpin(&device->pins[chain]);
+    for (uint32_t queue = 0; queue < device->queue_capacity; queue++) {
+        for (uint32_t chain = 0; chain < DEVICE_REQUESTS; chain++) {
+            unpin(&device->pins[queue][chain]);
+        }
+        virtio_queue_reset(&device->queues[queue]);
+        device->completions_of[queue] = 0;
     }
-    virtio_queue_reset(&device->queue);
+    device->queue_count = 0;
     device->completion_head = 0;
     device->completion_count = 0;
     device->features = 0;
@@ -112,8 +146,8 @@ int64_t virtio_device_reset(struct virtio_device *device)
     return KERNEL_OK;
 }
 
-int64_t virtio_device_submit(struct virtio_device *device, const struct virtio_transfer *transfers,
-                             uint32_t count)
+int64_t virtio_device_submit(struct virtio_device *device, uint32_t queue,
+                             const struct virtio_transfer *transfers, uint32_t count)
 {
     struct virtio_segment segments[DEVICE_SEGMENTS] = {0};
     struct virtio_pin pin = {0};
@@ -122,10 +156,11 @@ int64_t virtio_device_submit(struct virtio_device *device, const struct virtio_t
     if (device->state != DEVICE_STATE_READY) {
         return -KERNEL_ERROR_BAD_STATE;
     }
-    if (count == 0 || count > DEVICE_SEGMENTS) {
+    if (queue >= device->queue_count || count == 0 || count > DEVICE_SEGMENTS) {
         return -KERNEL_ERROR_INVALID_ARGUMENT;
     }
-    if (virtio_queue_in_flight(&device->queue) + device->completion_count >= DEVICE_REQUESTS) {
+    if (virtio_queue_in_flight(&device->queues[queue]) + device->completions_of[queue] >=
+        DEVICE_REQUESTS) {
         return -KERNEL_ERROR_LIMIT_EXCEEDED;
     }
     for (uint32_t index = 0; index < count; index++) {
@@ -139,15 +174,15 @@ int64_t virtio_device_submit(struct virtio_device *device, const struct virtio_t
         segments[index].length = transfers[index].length;
         segments[index].device_writes = transfers[index].device_writes;
     }
-    chain = virtio_queue_add(&device->queue, segments, count);
+    chain = virtio_queue_add(&device->queues[queue], segments, count);
     if (chain < 0) {
         unpin(&pin);
         return chain;
     }
     device->next_token++;
     pin.token = device->next_token;
-    device->pins[chain] = pin;
-    virtio_mmio_write(device->registers, VIRTIO_MMIO_QUEUE_NOTIFY, REQUEST_QUEUE);
+    device->pins[queue][chain] = pin;
+    virtio_mmio_write(device->registers, VIRTIO_MMIO_QUEUE_NOTIFY, queue);
     return (int64_t)pin.token;
 }
 
@@ -159,19 +194,11 @@ void virtio_device_interrupt(struct virtio_device *device)
     if (device->state != DEVICE_STATE_READY) {
         return;
     }
-    for (;;) {
-        uint32_t chain = 0;
-        uint32_t written = 0;
-        enum virtio_used used = virtio_queue_take_used(&device->queue, &chain, &written);
-
-        if (used == VIRTIO_USED_EMPTY) {
-            break;
-        }
-        if (used == VIRTIO_USED_VIOLATION) {
+    for (uint32_t queue = 0; queue < device->queue_count; queue++) {
+        if (!drain(device, queue)) {
             fail(device, "used-ring-violation");
             return;
         }
-        complete(device, chain, written);
     }
     if ((virtio_mmio_read(device->registers, VIRTIO_MMIO_STATUS) & VIRTIO_STATUS_NEEDS_RESET) != 0) {
         fail(device, "device-needs-reset");
@@ -185,8 +212,9 @@ bool virtio_device_take_completion(struct virtio_device *device,
         return false;
     }
     *completion = device->completions[device->completion_head];
-    device->completion_head = (device->completion_head + 1u) % DEVICE_REQUESTS;
+    device->completion_head = (device->completion_head + 1u) % VIRTIO_COMPLETIONS;
     device->completion_count--;
+    device->completions_of[completion->queue]--;
     return true;
 }
 
@@ -209,5 +237,10 @@ int64_t virtio_device_read_config(const struct virtio_device *device, uint32_t o
 
 uint32_t virtio_device_in_flight(const struct virtio_device *device)
 {
-    return virtio_queue_in_flight(&device->queue);
+    uint32_t in_flight = 0;
+
+    for (uint32_t queue = 0; queue < device->queue_capacity; queue++) {
+        in_flight += virtio_queue_in_flight(&device->queues[queue]);
+    }
+    return in_flight;
 }
