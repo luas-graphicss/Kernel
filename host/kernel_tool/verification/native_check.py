@@ -7,6 +7,7 @@ from kernel_tool.outcome import CheckError, InfrastructureError
 from kernel_tool.workspace import Workspace
 
 HOSTED_SOURCES = (
+    "native/supervisor/capabilities/capability_space.c",
     "native/supervisor/devices/device_tree/boot_description.c",
     "native/supervisor/devices/device_tree/container.c",
     "native/supervisor/devices/device_tree/tokens.c",
@@ -15,6 +16,8 @@ HOSTED_SOURCES = (
     "native/supervisor/memory/layout.c",
     "native/supervisor/memory/page_table.c",
     "native/supervisor/memory/range.c",
+    "native/supervisor/objects/object_table.c",
+    "native/supervisor/objects/slot_table.c",
     "native/supervisor/processes/syscall.c",
     "native/supervisor/processes/user_image.c",
 )
