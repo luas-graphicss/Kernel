@@ -1,0 +1,9 @@
+package(
+    "kernel_services",
+    files=(
+        "__init__.py",
+        "init/__init__.py",
+        "init/main.py",
+    ),
+    base_path="$(KERNEL_ROOT)/src",
+)
