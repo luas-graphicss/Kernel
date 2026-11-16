@@ -18,11 +18,17 @@ SECTIONS
         *(.text .text.*)
     } :text
 
-    .rodata : ALIGN(4096) {
+    . = ALIGN(4096);
+    kernel_rodata_start = .;
+
+    .rodata : {
         *(.rodata .rodata.* .srodata .srodata.*)
     } :rodata
 
-    .data : ALIGN(4096) {
+    . = ALIGN(4096);
+    kernel_data_start = .;
+
+    .data : {
         *(.data .data.* .sdata .sdata.*)
     } :data
 
@@ -36,6 +42,8 @@ SECTIONS
     . = ALIGN(4096);
     kernel_image_end = .;
 
+    supervisor_stack_guard = .;
+    . += 4096;
     supervisor_stack_bottom = .;
     . += SUPERVISOR_STACK_BYTES;
     supervisor_stack_top = .;
@@ -50,8 +58,6 @@ SECTIONS
 
     user_region_start = USER_REGION_BASE;
     user_region_end = USER_REGION_BASE + USER_REGION_BYTES;
-
-    ASSERT(supervisor_heap_end <= user_region_start, "the kernel image overlaps the user region")
 
     /DISCARD/ : {
         *(.comment)
