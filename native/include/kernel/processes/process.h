@@ -33,6 +33,7 @@ enum wait_kind {
     WAIT_SEND,
     WAIT_REPLY,
     WAIT_PROCESS,
+    WAIT_DEVICE,
 };
 
 struct process_wait {

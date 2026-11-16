@@ -28,8 +28,18 @@ NATIVE_C_SOURCES := \
 	native/supervisor/capabilities/capability_space.c \
 	native/supervisor/devices/device_tree/boot_description.c \
 	native/supervisor/devices/device_tree/container.c \
+	native/supervisor/devices/device_tree/device_inventory.c \
+	native/supervisor/devices/device_tree/properties.c \
 	native/supervisor/devices/device_tree/tokens.c \
+	native/supervisor/devices/interrupts/dispatch.c \
+	native/supervisor/devices/interrupts/plic.c \
+	native/supervisor/devices/registry/device_registry.c \
+	native/supervisor/devices/serial/serial_port.c \
 	native/supervisor/devices/uart_ns16550.c \
+	native/supervisor/devices/virtio/device.c \
+	native/supervisor/devices/virtio/mmio.c \
+	native/supervisor/devices/virtio/negotiation.c \
+	native/supervisor/devices/virtio/queue.c \
 	native/supervisor/diagnostics/console.c \
 	native/supervisor/diagnostics/counters.c \
 	native/supervisor/diagnostics/halt.c \
@@ -58,6 +68,7 @@ NATIVE_C_SOURCES := \
 	native/supervisor/processes/supervision.c \
 	native/supervisor/processes/syscall.c \
 	native/supervisor/processes/syscall_capability.c \
+	native/supervisor/processes/syscall_device.c \
 	native/supervisor/processes/syscall_ipc.c \
 	native/supervisor/processes/syscall_memory.c \
 	native/supervisor/processes/syscall_process.c \
@@ -71,6 +82,7 @@ NATIVE_C_SOURCES := \
 NATIVE_ASSEMBLY_SOURCES := \
 	native/arch/riscv64/boot/entry.S \
 	native/arch/riscv64/context/user_context.S \
+	native/arch/riscv64/interrupts/external.S \
 	native/arch/riscv64/mmu/mmu.S \
 	native/arch/riscv64/sbi/sbi_call.S \
 	native/arch/riscv64/timer/timer.S \

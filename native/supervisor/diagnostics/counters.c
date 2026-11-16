@@ -1,7 +1,10 @@
 #include "kernel/diagnostics/counters.h"
 
+#include "kernel/devices/device_registry.h"
+#include "kernel/devices/interrupts.h"
 #include "kernel/ipc/endpoint.h"
 #include "kernel/memory/buffer.h"
+#include "kernel/memory/buffer_pins.h"
 #include "kernel/memory/physical_memory.h"
 #include "kernel/objects/kernel_objects.h"
 #include "kernel/processes/process.h"
@@ -34,4 +37,8 @@ void resource_counters_read(uint64_t counters[COUNTERS])
     counters[COUNTER_PREEMPTIONS] = activity.preemptions;
     counters[COUNTER_REFUSED_ALLOCATIONS] = pool->refused_allocations;
     counters[COUNTER_TIMER_INTERRUPTS] = activity.timer_interrupts;
+    counters[COUNTER_EXTERNAL_INTERRUPTS] = interrupts_handled();
+    counters[COUNTER_DEVICE_REQUESTS] = device_registry_requests();
+    counters[COUNTER_PINNED_BUFFERS] = buffer_pinned_count();
+    counters[COUNTER_QUARANTINED_DEVICES] = device_registry_quarantined();
 }

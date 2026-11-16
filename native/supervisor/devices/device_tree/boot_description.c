@@ -1,5 +1,6 @@
 #include "kernel/devices/device_tree.h"
 
+#include "properties.h"
 #include "tokens.h"
 
 #define DEFAULT_ADDRESS_CELLS 2u
@@ -35,71 +36,16 @@ struct boot_scan {
     bool console_found;
 };
 
-static bool text_equals(const char *left, const char *right)
-{
-    while (*left != '\0' && *left == *right) {
-        left++;
-        right++;
-    }
-    return *left == *right;
-}
-
-static bool bytes_are_text(const uint8_t *bytes, uint32_t length, const char *text)
-{
-    uint32_t index = 0;
-    while (index < length && text[index] != '\0') {
-        if (bytes[index] != (uint8_t)text[index]) {
-            return false;
-        }
-        index++;
-    }
-    return index + 1u == length && text[index] == '\0' && bytes[index] == 0;
-}
-
-static bool list_has_text(const struct device_tree_token *property, const char *text)
-{
-    uint32_t start = 0;
-    while (start < property->value_bytes) {
-        uint32_t end = start;
-        while (end < property->value_bytes && property->value[end] != 0) {
-            end++;
-        }
-        if (end == property->value_bytes) {
-            return false;
-        }
-        if (bytes_are_text(property->value + start, end - start + 1u, text)) {
-            return true;
-        }
-        start = end + 1u;
-    }
-    return false;
-}
-
-static bool read_cells(const uint8_t *bytes, uint32_t cells, uint64_t *value)
-{
-    if (cells == 1u) {
-        *value = device_tree_read_be32(bytes);
-        return true;
-    }
-    if (cells == 2u) {
-        *value = device_tree_read_be64(bytes);
-        return true;
-    }
-    return false;
-}
-
 static uint32_t register_entry_bytes(const struct open_node *parent)
 {
-    return (parent->child_address_cells + parent->child_size_cells) * DEVICE_TREE_CELL_BYTES;
+    return device_tree_range_bytes(parent->child_address_cells, parent->child_size_cells);
 }
 
 static enum device_tree_status read_register_entry(const struct open_node *parent,
                                                    const uint8_t *entry, struct memory_range *range)
 {
-    const uint8_t *size = entry + parent->child_address_cells * DEVICE_TREE_CELL_BYTES;
-
-    if (!read_cells(entry, parent->child_address_cells, &range->base) ||
-        !read_cells(size, parent->child_size_cells, &range->length)) {
+    if (!device_tree_read_range(entry, parent->child_address_cells, parent->child_size_cells,
+                                range)) {
         return DEVICE_TREE_BAD_PROPERTY;
     }
     return DEVICE_TREE_OK;
@@ -182,8 +128,10 @@ static enum device_tree_status read_cell_count(const struct device_tree_token *p
 static enum device_tree_status read_address(const struct device_tree_token *property,
                                             uint64_t *address)
 {
+    uint32_t cells = property->value_bytes / DEVICE_TREE_CELL_BYTES;
+
     if (property->value_bytes % DEVICE_TREE_CELL_BYTES != 0 ||
-        !read_cells(property->value, property->value_bytes / DEVICE_TREE_CELL_BYTES, address)) {
+        !device_tree_read_cells(property->value, cells, address)) {
         return DEVICE_TREE_BAD_PROPERTY;
     }
     return DEVICE_TREE_OK;
@@ -203,14 +151,14 @@ static enum device_tree_status read_arguments(const struct device_tree_token *pr
 static enum device_tree_status scan_chosen_property(struct boot_scan *scan,
                                                     const struct device_tree_token *property)
 {
-    if (text_equals(property->name, "bootargs")) {
+    if (device_tree_text_equals(property->name, "bootargs")) {
         return read_arguments(property, &scan->description->arguments);
     }
-    if (text_equals(property->name, "linux,initrd-start")) {
+    if (device_tree_text_equals(property->name, "linux,initrd-start")) {
         scan->module.has_start = true;
         return read_address(property, &scan->module.start);
     }
-    if (text_equals(property->name, "linux,initrd-end")) {
+    if (device_tree_text_equals(property->name, "linux,initrd-end")) {
         scan->module.has_end = true;
         return read_address(property, &scan->module.end);
     }
@@ -225,27 +173,28 @@ static enum device_tree_status scan_property(struct boot_scan *scan,
     }
     struct open_node *node = &scan->nodes[scan->depth - 1u];
 
-    if (text_equals(property->name, "#address-cells")) {
+    if (device_tree_text_equals(property->name, "#address-cells")) {
         return read_cell_count(property, &node->child_address_cells);
     }
-    if (text_equals(property->name, "#size-cells")) {
+    if (device_tree_text_equals(property->name, "#size-cells")) {
         return read_cell_count(property, &node->child_size_cells);
     }
-    if (text_equals(property->name, "reg")) {
+    if (device_tree_text_equals(property->name, "reg")) {
         node->registers = property->value;
         node->registers_bytes = property->value_bytes;
         return DEVICE_TREE_OK;
     }
-    if (text_equals(property->name, "device_type")) {
-        node->is_memory = scan->depth == ROOT_CHILD_DEPTH &&
-                          bytes_are_text(property->value, property->value_bytes, "memory");
+    if (device_tree_text_equals(property->name, "device_type")) {
+        node->is_memory =
+            scan->depth == ROOT_CHILD_DEPTH &&
+            device_tree_value_is_text(property->value, property->value_bytes, "memory");
         return DEVICE_TREE_OK;
     }
-    if (text_equals(property->name, "compatible")) {
-        node->is_console = list_has_text(property, "ns16550a");
+    if (device_tree_text_equals(property->name, "compatible")) {
+        node->is_console = device_tree_list_has_text(property, "ns16550a");
         return DEVICE_TREE_OK;
     }
-    if (node->is_processors && text_equals(property->name, "timebase-frequency")) {
+    if (node->is_processors && device_tree_text_equals(property->name, "timebase-frequency")) {
         scan->description->has_timebase = true;
         return read_address(property, &scan->description->timebase_frequency);
     }
@@ -265,9 +214,9 @@ static enum device_tree_status scan_begin_node(struct boot_scan *scan, const cha
     scan->nodes[scan->depth] = (struct open_node){
         .child_address_cells = DEFAULT_ADDRESS_CELLS,
         .child_size_cells = DEFAULT_SIZE_CELLS,
-        .is_chosen = is_root_child && text_equals(name, "chosen"),
-        .is_processors = is_root_child && text_equals(name, "cpus"),
-        .holds_reservations = is_root_child && text_equals(name, "reserved-memory"),
+        .is_chosen = is_root_child && device_tree_text_equals(name, "chosen"),
+        .is_processors = is_root_child && device_tree_text_equals(name, "cpus"),
+        .holds_reservations = is_root_child && device_tree_text_equals(name, "reserved-memory"),
     };
     scan->depth++;
     return DEVICE_TREE_OK;

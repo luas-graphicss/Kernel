@@ -11,5 +11,8 @@ struct uart_ns16550 {
 };
 
 bool uart_ns16550_write_byte(const struct uart_ns16550 *uart, uint8_t byte);
+bool uart_ns16550_try_write_byte(const struct uart_ns16550 *uart, uint8_t byte);
+bool uart_ns16550_read_byte(const struct uart_ns16550 *uart, uint8_t *byte);
+void uart_ns16550_enable_receive_interrupt(const struct uart_ns16550 *uart);
 
 #endif

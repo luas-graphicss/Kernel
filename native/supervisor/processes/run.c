@@ -3,6 +3,9 @@
 #include <stddef.h>
 
 #include "kernel/abi/process.h"
+#include "kernel/arch/interrupts.h"
+#include "kernel/devices/device_registry.h"
+#include "kernel/devices/interrupts.h"
 #include "kernel/diagnostics/console.h"
 #include "kernel/diagnostics/counters.h"
 #include "kernel/memory/kernel_space.h"
@@ -72,6 +75,12 @@ static void enter_user(struct process *process, uint64_t quantum_end)
     kernel_space_activate();
 }
 
+static bool is_external_interrupt(uint64_t cause)
+{
+    return trap_is_interrupt(cause) &&
+           trap_interrupt_number(cause) == TRAP_CAUSE_SUPERVISOR_EXTERNAL;
+}
+
 static bool quantum_expired(uint64_t quantum_end)
 {
     uint64_t now = timer_now();
@@ -100,6 +109,13 @@ struct run_outcome supervisor_run(uint64_t handle, uint64_t quantum_nanoseconds)
         struct syscall_result result;
 
         enter_user(process, quantum_end);
+        if (is_external_interrupt(frame->cause)) {
+            interrupts_dispatch();
+            if (process_events_pending()) {
+                return suspend(process, RUN_PREEMPTED);
+            }
+            continue;
+        }
         if (trap_is_interrupt(frame->cause)) {
             if (quantum_expired(quantum_end)) {
                 activity_counters()->preemptions++;
@@ -140,10 +156,11 @@ bool supervisor_idle(void)
 {
     uint64_t deadline = wait_earliest_deadline();
 
-    if (deadline == CLOCK_NEVER) {
+    if (deadline == CLOCK_NEVER && !device_registry_has_waiters()) {
         return false;
     }
     timer_wait_until(deadline);
+    interrupts_dispatch();
     wait_expire(timer_now());
     return true;
 }

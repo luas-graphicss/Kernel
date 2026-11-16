@@ -4,6 +4,7 @@
 
 #include "kernel/abi/errors.h"
 #include "kernel/abi/rights.h"
+#include "kernel/memory/buffer_pins.h"
 #include "kernel/memory/physical_memory.h"
 #include "kernel/memory/string.h"
 #include "kernel/objects/kernel_objects.h"
@@ -14,8 +15,10 @@
 struct buffer {
     bool used;
     bool alive;
+    bool disposed;
     uint32_t owner;
     uint32_t order;
+    uint32_t pins;
     uint64_t owner_handle;
     uint64_t base;
     uint64_t bytes;
@@ -23,6 +26,16 @@ struct buffer {
 
 static struct buffer buffers[BUFFER_CAPACITY];
 static uint64_t live;
+static uint64_t pinned;
+
+static void release_frames(struct buffer *buffer)
+{
+    frame_pool_free(physical_memory_pool(), buffer->base, buffer->order);
+    if (buffer->disposed) {
+        buffer->used = false;
+        live--;
+    }
+}
 
 static uint32_t mapping_rights(const struct buffer_mapping *mapping)
 {
@@ -67,12 +80,15 @@ static void destroy(uint32_t index)
     if (owner != NULL && owner->handle == buffer->owner_handle) {
         owner->buffer_frames -= buffer->bytes / FRAME_BYTES;
     }
-    frame_pool_free(physical_memory_pool(), buffer->base, buffer->order);
+    if (buffer->pins == 0) {
+        release_frames(buffer);
+    }
 }
 
 void buffer_table_init(void)
 {
     live = 0;
+    pinned = 0;
     for (uint32_t index = 0; index < BUFFER_CAPACITY; index++) {
         buffers[index] = (struct buffer){0};
     }
@@ -119,12 +135,52 @@ int64_t buffer_allocate(struct process *owner, uint64_t bytes)
 
 void buffer_dispose(uint32_t index)
 {
-    if (!buffers[index].used) {
+    struct buffer *buffer = &buffers[index];
+
+    if (!buffer->used || buffer->disposed) {
         return;
     }
     destroy(index);
-    buffers[index].used = false;
-    live--;
+    buffer->disposed = true;
+    if (buffer->pins == 0) {
+        buffer->used = false;
+        live--;
+    }
+}
+
+bool buffer_pin(uint32_t index, uint64_t offset, uint64_t length, uint64_t *physical)
+{
+    struct buffer *buffer = index < BUFFER_CAPACITY ? &buffers[index] : NULL;
+
+    if (buffer == NULL || !buffer->used || !buffer->alive || length == 0 ||
+        offset > buffer->bytes || length > buffer->bytes - offset) {
+        return false;
+    }
+    if (buffer->pins == 0) {
+        pinned++;
+    }
+    buffer->pins++;
+    *physical = buffer->base + offset;
+    return true;
+}
+
+void buffer_unpin(uint32_t index)
+{
+    struct buffer *buffer = &buffers[index];
+
+    buffer->pins--;
+    if (buffer->pins != 0) {
+        return;
+    }
+    pinned--;
+    if (!buffer->alive) {
+        release_frames(buffer);
+    }
+}
+
+uint64_t buffer_pinned_count(void)
+{
+    return pinned;
 }
 
 void buffer_destroy_owned(const struct process *owner)
