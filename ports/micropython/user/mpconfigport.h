@@ -6,5 +6,7 @@
 #define MICROPY_HW_BOARD_NAME "kernel-user"
 #define MICROPY_HW_MCU_NAME "rv64imac"
 #define MICROPY_PY_ATTRTUPLE (1)
+#define MICROPY_ENABLE_COMPILER (1)
+#define MICROPY_PY_FSTRINGS (1)
 
 #endif
