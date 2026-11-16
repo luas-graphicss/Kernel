@@ -17,7 +17,7 @@ Há dois perfis do mesmo source lock, sem fork do interpretador:
 
 Nos dois perfis:
 
-- Só módulos congelados em bytecode no build. O compilador e o REPL ficam desligados, e `eval`, `exec`, `compile`, `open` e `input` não existem.
+- Só módulos congelados em bytecode no build. O compilador e o REPL ficam desligados, e `eval`, `exec`, `compile`, `open` e `input` não existem. O ADR 0009 muda este ponto para o perfil `user`, que passa a ter o compilador para executar programas lidos do volume; o perfil `supervisor` continua sem ele.
 - `MICROPY_ENABLE_EXTERNAL_IMPORT` fica ligado porque é esse caminho de importação que resolve módulos e pacotes congelados. Nada de fora da imagem é carregado: `mp_import_stat` responde que nenhum caminho existe, `MICROPY_PERSISTENT_CODE_LOAD` fica desligado e `sys.path` contém só `.frozen`.
 - A configuração parte de `MICROPY_CONFIG_ROM_LEVEL_MINIMUM` e habilita recurso por recurso em `ports/micropython/shared/mpconfigshared.h`.
 - Inteiros longos usam MPZ. Ponto flutuante fica desligado.

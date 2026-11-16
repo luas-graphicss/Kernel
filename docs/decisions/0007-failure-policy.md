@@ -40,7 +40,7 @@ Todo boot termina com uma linha `kernel: status=ok` ou `kernel: status=failed`, 
 
 Um teste só passa quando a linha de status, as asserções do cenário e o código de saída do emulador concordam. Boot que estoura o deadline é falha, não teste ignorado.
 
-Todas as linhas têm cenário ou caso de suíte, com duas ressalvas. Da morte de serviço existem o fechamento dos endpoints, a conclusão das esperas e o reinício dos serviços de arquivos e de blocos quando o `init` o pede; uma política de reinício automático, com quantidade e janela no manifesto, ainda não existe. Do flood existem a fila de eventos limitada e a entrada serial limitada, as duas com descarte contabilizado.
+Todas as linhas têm cenário ou caso de suíte, com duas ressalvas. Da morte de serviço existem o fechamento dos endpoints, a conclusão das esperas e, com o gerente do sistema, o reinício automático dentro da quantidade e da janela da configuração, como registra o ADR 0009. Do flood existem a fila de eventos limitada e a entrada serial limitada, as duas com descarte contabilizado.
 
 Um cliente distingue erro definitivo de resultado desconhecido pelo código: `UNKNOWN_OUTCOME` só aparece quando uma operação com efeito pode ter acontecido. Nenhuma camada repete sozinha uma operação com efeito.
 

@@ -45,8 +45,13 @@ Cada fronteira tem limites, um resultado de erro definido e um teste negativo.
 | Caminho | 1024 bytes, 32 componentes, nomes de até 255 bytes de UTF-8 válido sem byte zero; `..` não passa da raiz do namespace | `ACCESS_DENIED`, `INVALID_ARGUMENT` ou `LIMIT_EXCEEDED`, antes de qualquer consulta ao volume | `tests/conformance/test_namespace_paths.py`; casos `path-resolution` e `namespaces-and-rights` da suíte `vfs` |
 | Volume persistente | De 8 a 65.536 blocos; árvore inteira verificada na montagem: ponteiros, checksums, gerações, números de nó, profundidade 32, nenhum bloco referenciado duas vezes | Montagem indisponível com `CORRUPTED` ou `UNSUPPORTED`, ou somente leitura; o volume nunca é formatado | `kernel-tool verify-filesystem --corpus tests/faults/storage`, com 21 imagens; `tests/conformance/test_filesystem_format.py` e `test_filesystem_recovery.py`; cenários `unformatted-device`, `unknown-format-version` e `damaged-newest-root` da suíte `storage` |
 | Imagem de boot | Cabeçalho e tabela com checksum; até 64 arquivos de até 256 KiB; arquivos contíguos e sem sobra; interface e runtime iguais aos do sistema | Montagem indisponível; arquivo que não confere devolve `CORRUPTED` na leitura | `tests/host/test_boot_image.py`; caso `boot-image` da suíte `vfs` |
-
-Pacotes de rede entram nesta tabela junto com a pilha de rede.
+| Quadro de rede | Até 1514 bytes; cada cabeçalho conferido antes do uso: comprimentos, checksums, remetente, destino; IPv4 sem opções; 16 datagramas e 1 MiB em reassembly, por 30 s; 32 vizinhos; respostas ICMP e resets limitados por rajada | Descartado e contado no contador da regra; nenhum socket nem buffer fica ocupado | `tests/conformance/test_network_malformed.py`, `test_network_reassembly.py` e `test_network_link.py`; caso `malformed-traffic` de `kernel-tool fault-test --suite network-faults`, com 31 espécimes |
+| Conexões de um peer | 8 pedidos pendentes por socket em escuta; 96 conexões; 16 KiB de buffer em cada sentido e 16 segmentos fora de ordem por conexão; 1 MiB de buffers no serviço | Pedido além da fila descartado e contado; escrita que não cabe espera; segmento fora da janela ignorado | `tests/conformance/test_network_tcp.py`; casos `connection-flood` de `network-faults` e `slow-reader` de `network-interop` |
+| Pedido ao serviço de sockets | Sessão criada só com a posse de um acesso emitido pelo serviço; direitos por acesso; handles válidos só para o processo e a instância que os recebeu; 16 sockets por processo e 64 no total | `ACCESS_DENIED`, `INVALID_HANDLE` ou `LIMIT_EXCEEDED`; nada muda | Casos `access-rights` e `socket-quota` da suíte `network` |
+| Configuração do sistema | 16.384 bytes, 256 linhas, 32 seções, 16 chaves por seção; só números, textos e listas; seções, chaves, serviços e direitos conhecidos; dependências sem ciclo; processos dentro do perfil | `system: configuration=rejected reason=` e boot encerrado, sem nenhum serviço da configuração iniciado | `tests/conformance/test_configuration.py`; cenários `configuration-missing`, `configuration-circular`, `configuration-excessive` e `configuration-inconsistent` da suíte `supervision` |
+| Pedido ao controle do sistema | Só processos admitidos pelo gerente, identificados pelo supervisor, com os direitos da configuração; comando de até 63 bytes imprimíveis; 8 esperas pendentes | `ACCESS_DENIED`, `INVALID_ARGUMENT` ou `LIMIT_EXCEEDED` | `tests/conformance/test_control_protocol.py`; suíte `applications`, com o programa `authority.py` |
+| Linha do shell | 255 bytes, 16 palavras, aspas fechadas; comando da tabela; números decimais dentro da faixa | `shell: command=<nome> status=failed error=` e o prompt de volta | `tests/conformance/test_shell_words.py`; suítes `applications` e `system-journey` |
+| Programa de aplicação | Arquivo de até 65.536 bytes, executado em processo próprio com as capabilities da política; heap limitado; sem import de arquivos | Término do processo com status 1 e diagnóstico; os outros processos seguem | Suíte `applications`: `failing.py`, `broken.txt`, `missing.py`, `hog.py`, `spin.py` |
 
 ## Invariantes testáveis
 
@@ -67,6 +72,13 @@ Pacotes de rede entram nesta tabela junto com a pilha de rede.
 - Um `SYNC` confirmado sobrevive à perda de qualquer escrita ainda não seguida de flush. Depois de um crash, a montagem mostra um commit inteiro.
 - Um volume que não passa na verificação não é montado para escrita, e nenhum volume é criado, formatado ou reparado para o boot seguir.
 - Nenhuma camada repete sozinha uma operação com efeito cujo resultado não conhece.
+- Um pacote malformado é descartado pelo parser da sua camada, é contado e não deixa socket, conexão nem buffer para trás.
+- Um processo sem um acesso emitido pelo serviço de rede não abre socket, e um acesso restrito nunca tem mais direitos que a origem.
+- Um peer ou um processo não ocupa mais buffers de rede do que o orçamento do serviço, por mais sockets ou conexões que abra.
+- Uma configuração inválida não é aplicada em parte: nenhum serviço dela inicia.
+- Um serviço que falha é reiniciado no máximo o número de vezes da janela configurada, com as mesmas concessões da instância anterior.
+- Uma aplicação recebe só os endpoints que a política concede, com `SEND`. Ela não recebe a capability do sistema, dispositivos nem o endpoint de controle.
+- O desligamento pedido passa pela parada dos serviços e pela sincronização dos volumes antes de o firmware ser chamado.
 - O ELF do kernel é estático, não tem símbolo indefinido e só liga `libgcc` além dos objetos do projeto.
 
 ## Riscos residuais
@@ -78,6 +90,11 @@ Pacotes de rede entram nesta tabela junto com a pilha de rede.
 - A durabilidade foi demonstrada no `virtio-blk` do QEMU, contra perda, reordenação e corte de escritas ainda não seguidas de flush. Um disco que confirme um flush que não fez está fora do que foi testado.
 - Frames em quarentena só voltam no boot seguinte. Falhas repetidas de reset reduzem a memória disponível.
 - A entropia vem do dispositivo `virtio-rng` do QEMU. Sem ele o sistema não oferece entropia, e a qualidade dos bytes é a do host.
-- O `init` nasce com a capability do sistema. Um defeito nele alcança a criação de processos e a leitura dos contadores.
+- O `init` e o gerente do sistema nascem com a capability do sistema. Um defeito em um deles alcança a criação de processos, os dispositivos, a leitura dos contadores e o pedido de desligamento.
+- O serviço de rede é confiável para o tráfego que passa por ele. Um defeito nele expõe ou altera dados de conexões, e não alcança a memória de outros processos nem os volumes.
+- O tráfego não é cifrado nem autenticado. Quem está na mesma rede lê e forja pacotes; os números de sequência iniciais sorteados dificultam, mas não impedem, a injeção em uma conexão.
+- A interoperabilidade foi demonstrada com a pilha TCP/IP do Linux, em uma rede isolada e com perda, duplicação e reordenação moderadas. Outros peers e redes com caminhos longos não foram testados.
+- O shell não autentica o operador: quem tem a porta serial tem os direitos de `[access.shell]`.
+- O processo de uma aplicação compila o código-fonte que carrega. Um defeito no compilador do MicroPython fica contido nesse processo.
 - O hash de um download prova que o arquivo é o que o lock registrou, não que o upstream é confiável.
 - TCG não reproduz temporização nem falhas de hardware real.
