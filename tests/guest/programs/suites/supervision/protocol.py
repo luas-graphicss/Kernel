@@ -1,0 +1,4 @@
+OPERATION_COUNT = 16
+OPERATION_HOLD = 17
+STEADY = b"steady"
+MUTE = b"mute"
