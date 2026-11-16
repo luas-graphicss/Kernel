@@ -1,7 +1,13 @@
 from pathlib import Path
 
 from kernel_tool.profiles.loader import DEFAULT_PROFILE, load_profile
-from kernel_tool.qemu.command import BootRequest, boot_command, device_tree_dump_command
+from kernel_tool.qemu.command import (
+    ENTROPY_ARGUMENTS,
+    BootRequest,
+    boot_command,
+    device_tree_dump_command,
+)
+from kernel_tool.qemu.drives import FileDrive
 from kernel_tool.toolchain.lock import load_lock
 from kernel_tool.toolchain.resolve import Toolchain
 
@@ -18,6 +24,10 @@ def reference_toolchain() -> Toolchain:
 
 def option_value(command: list[str], option: str) -> str:
     return command[command.index(option) + 1]
+
+
+def option_values(command: list[str], option: str) -> list[str]:
+    return [command[index + 1] for index, argument in enumerate(command) if argument == option]
 
 
 def test_boot_command_pins_the_reference_machine() -> None:
@@ -42,6 +52,9 @@ def test_boot_command_pins_the_reference_machine() -> None:
     assert "-initrd" not in command
     assert "-dtb" not in command
     assert "-append" not in command
+    assert "-blockdev" not in command
+    assert "-device" not in command
+    assert "-object" not in command
 
 
 def test_boot_command_adds_optional_boot_inputs() -> None:
@@ -60,6 +73,30 @@ def test_boot_command_adds_optional_boot_inputs() -> None:
     assert option_value(command, "-initrd") == "/build/user.img"
     assert option_value(command, "-dtb") == "/build/patched.dtb"
     assert option_value(command, "-append") == "selftest=supervisor-trap"
+
+
+def test_boot_command_attaches_drives_in_order_and_the_entropy_source_last() -> None:
+    profile = load_profile(REPOSITORY, DEFAULT_PROFILE)
+    request = BootRequest(
+        kernel=Path("/build/kernel.elf"),
+        memory_mib=256,
+        drives=(
+            FileDrive("kernel-boot", Path("/build/boot.img"), read_only=True),
+            FileDrive("kernel-data", Path("/build/scenarios/data.img")),
+        ),
+        entropy=True,
+    )
+
+    command = boot_command(profile, reference_toolchain(), request)
+
+    assert option_values(command, "-device") == [
+        "virtio-blk-device,drive=disk-kernel-boot,serial=kernel-boot",
+        "virtio-blk-device,drive=disk-kernel-data,serial=kernel-data",
+        "virtio-rng-device,rng=entropy",
+    ]
+    assert option_value(command, "-object") == "rng-builtin,id=entropy"
+    assert command[-len(ENTROPY_ARGUMENTS) :] == list(ENTROPY_ARGUMENTS)
+    assert "-drive" not in command
 
 
 def test_boot_never_enables_semihosting() -> None:

@@ -7,6 +7,7 @@ from pathlib import Path
 
 from kernel_tool.outcome import CheckError, InfrastructureError
 from kernel_tool.profiles.model import Profile
+from kernel_tool.storage.boot_image import write_boot_image
 from kernel_tool.toolchain.resolve import Toolchain
 from kernel_tool.workspace import Workspace
 
@@ -25,6 +26,7 @@ class BuildOutputs:
     fault_image: Path
     tests_program: Path
     tests_image: Path
+    boot_image: Path
 
     @property
     def artifacts(self) -> tuple[Path, ...]:
@@ -34,6 +36,7 @@ class BuildOutputs:
             self.init_image,
             self.fault_image,
             self.tests_image,
+            self.boot_image,
         )
 
     @property
@@ -66,6 +69,7 @@ def build_outputs(
         fault_image=root / "fault.img",
         tests_program=root / "user" / "tests.elf",
         tests_image=root / "tests.img",
+        boot_image=root / "boot.img",
     )
 
 
@@ -142,6 +146,7 @@ def build_image(
 ) -> BuildOutputs:
     run_make(workspace, profile, toolchain, BUILD_GOAL, directory)
     outputs = build_outputs(workspace, profile, directory)
+    write_boot_image(workspace.root, toolchain.lock, outputs.boot_image)
     require_artifacts(outputs)
     return outputs
 

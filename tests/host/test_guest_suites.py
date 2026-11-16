@@ -6,13 +6,39 @@ import pytest
 
 from kernel_tool.commands.test import SUITES
 from kernel_tool.scenarios.evaluation import check_transcript
+from kernel_tool.scenarios.fault_suites import FAULT_SUITES
 from kernel_tool.scenarios.guest_suites import CASES, CYCLES_CASE, GUEST_SUITES, MEASURED_CYCLES
 from kernel_tool.scenarios.model import BootModule, Deadline, Image, Scenario
 from kernel_tool.verification.transcript import read_transcript
 
 REPOSITORY = Path(__file__).resolve().parents[2]
 PROGRAMS = REPOSITORY / "tests" / "guest" / "programs"
-REQUIRED = {"memory", "processes", "capabilities", "ipc", "scheduling"}
+REQUIRED = {
+    "memory",
+    "processes",
+    "capabilities",
+    "ipc",
+    "scheduling",
+    "devices",
+    "vfs",
+    "storage",
+}
+TESTS_IMAGE_PROGRAMS = {
+    "suites.capabilities.main",
+    "suites.device_reset.main",
+    "suites.devices.main",
+    "suites.ipc.main",
+    "suites.memory.main",
+    "suites.processes.cycles",
+    "suites.processes.main",
+    "suites.scheduling.main",
+    "suites.services.main",
+    "suites.storage.journal",
+    "suites.storage.main",
+    "suites.storage.reader",
+    "suites.storage.writer",
+    "suites.vfs.main",
+}
 INIT_OPTION = "init="
 CLEAN_EXIT = (
     "policy: reaped=init reason=exit value=0 live=0 memory-in-use=0",
@@ -55,7 +81,12 @@ def scenario(suite: str, name: str) -> Scenario:
 
 
 def every_scenario() -> list[Scenario]:
-    return [candidate for scenarios in GUEST_SUITES.values() for candidate in scenarios]
+    suites = (*GUEST_SUITES.values(), *FAULT_SUITES.values())
+    return [candidate for scenarios in suites for candidate in scenarios]
+
+
+def case_program(suite: str) -> str:
+    return f"suites.{suite.replace('-', '_')}.main"
 
 
 def program_file(module: str) -> Path:
@@ -96,9 +127,13 @@ def test_every_required_suite_is_registered_next_to_bootstrap() -> None:
         assert SUITES[name] is GUEST_SUITES[name]
 
 
-@pytest.mark.parametrize("suite", sorted(REQUIRED))
+@pytest.mark.parametrize("suite", sorted(CASES))
 def test_host_expects_every_case_the_guest_program_declares(suite: str) -> None:
-    assert declared_cases(f"suites.{suite}.main") == CASES[suite]
+    assert declared_cases(case_program(suite)) == CASES[suite]
+
+
+@pytest.mark.parametrize("suite", sorted(REQUIRED))
+def test_a_transcript_with_every_case_passes_the_scenario(suite: str) -> None:
     assert failures(scenario(suite, "cases"), reported_by(suite, CASES[suite])) == []
 
 
@@ -134,12 +169,14 @@ def test_every_program_is_frozen_in_the_tests_image() -> None:
         candidate for candidate in every_scenario() if candidate.boot_module is BootModule.TESTS
     ]
 
-    assert len(booted) == len(REQUIRED) + 1
+    modules = set()
     for candidate in booted:
         assert candidate.arguments is not None
         module = candidate.arguments.removeprefix(INIT_OPTION)
+        modules.add(module)
         assert program_file(module).is_file()
         assert '"' + "/".join(module.split(".")[1:]) + '.py"' in manifest
+    assert modules == TESTS_IMAGE_PROGRAMS
 
 
 def test_cycles_run_under_the_soak_deadline_and_report_how_many_completed() -> None:
