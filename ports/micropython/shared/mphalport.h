@@ -1,0 +1,4 @@
+#ifndef KERNEL_PORT_MPHALPORT_H
+#define KERNEL_PORT_MPHALPORT_H
+
+#endif
