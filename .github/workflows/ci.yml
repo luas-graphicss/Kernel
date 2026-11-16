@@ -88,11 +88,29 @@ jobs:
       - name: Run the persistent volume programs
         run: sh .github/scripts/classify-exit.sh uv run kernel-tool test --profile qemu-riscv64 --suite storage
 
+      - name: Run the network stack programs against the peer
+        run: sh .github/scripts/classify-exit.sh uv run kernel-tool test --profile qemu-riscv64 --suite network
+
+      - name: Transfer data both ways over a clean and an impaired link
+        run: sh .github/scripts/classify-exit.sh uv run kernel-tool test --profile qemu-riscv64 --suite network-interop
+
+      - name: Run programs loaded from the volume as applications
+        run: sh .github/scripts/classify-exit.sh uv run kernel-tool test --profile qemu-riscv64 --suite applications
+
+      - name: Run the service supervision programs and refuse invalid configurations
+        run: sh .github/scripts/classify-exit.sh uv run kernel-tool test --profile qemu-riscv64 --suite supervision
+
+      - name: Operate the system through the shell across a restart
+        run: sh .github/scripts/classify-exit.sh uv run kernel-tool test --profile qemu-riscv64 --suite system-journey
+
       - name: Stall a device and fail its reset
         run: sh .github/scripts/classify-exit.sh uv run kernel-tool fault-test --profile qemu-riscv64 --suite device-reset
 
       - name: Crash the volume at every write and flush
         run: sh .github/scripts/classify-exit.sh uv run kernel-tool fault-test --profile qemu-riscv64 --suite storage-crash
+
+      - name: Send malformed traffic, flood a listener and interrupt the link
+        run: sh .github/scripts/classify-exit.sh uv run kernel-tool fault-test --profile qemu-riscv64 --suite network-faults
 
       - name: Verify the volume image corpus
         run: sh .github/scripts/classify-exit.sh uv run kernel-tool verify-filesystem --corpus tests/faults/storage
