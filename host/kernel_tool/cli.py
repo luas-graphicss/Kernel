@@ -5,7 +5,15 @@ import sys
 from collections.abc import Sequence
 from pathlib import Path
 
-from kernel_tool.commands import artifacts, build, emulation, test, toolchain
+from kernel_tool.commands import (
+    artifacts,
+    build,
+    emulation,
+    fault_test,
+    storage,
+    test,
+    toolchain,
+)
 from kernel_tool.commands.options import Command
 from kernel_tool.outcome import ToolError
 from kernel_tool.workspace import open_workspace
@@ -15,6 +23,8 @@ REGISTRARS = (
     build.register,
     emulation.register,
     test.register,
+    fault_test.register,
+    storage.register,
     artifacts.register,
 )
 
