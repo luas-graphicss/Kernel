@@ -8,7 +8,7 @@ harts = 1
 memory_mib = 256
 accelerator = "tcg"
 globals = ["virtio-mmio.force-legacy=false"]
-firmware = "opensbi-riscv64-generic-fw_dynamic.bin"
+firmware = "opensbi"
 
 [layout]
 kernel_base = 0x80200000

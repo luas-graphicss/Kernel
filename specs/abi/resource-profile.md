@@ -15,7 +15,7 @@ Um perfil descreve a máquina, o layout de memória e os limites com que uma ima
 | `memory_mib` | RAM da máquina, em MiB |
 | `accelerator` | Valor de `-accel` |
 | `globals` | Lista de valores de `-global` |
-| `firmware` | Arquivo de firmware dentro do diretório de dados do emulador |
+| `firmware` | Nome do componente de firmware em `toolchain.lock.toml` |
 
 ## `[layout]`
 
