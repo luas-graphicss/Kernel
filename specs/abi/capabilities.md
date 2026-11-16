@@ -8,11 +8,11 @@ Toda autoridade de um processo é uma capability na sua tabela: um objeto do sup
 | --- | --- | --- |
 | `0x01` | `RIGHT_SEND` | Enviar a um endpoint; responder com uma capability de resposta |
 | `0x02` | `RIGHT_RECEIVE` | Receber de um endpoint |
-| `0x04` | `RIGHT_READ` | Mapear um buffer para leitura; esperar um processo; ler os contadores do sistema |
-| `0x08` | `RIGHT_WRITE` | Mapear um buffer para escrita |
+| `0x04` | `RIGHT_READ` | Mapear um buffer para leitura; esperar um processo; ler os contadores do sistema e a lista de dispositivos; ler a configuração, as conclusões e a entrada de um dispositivo; ceder um buffer a um pedido que o dispositivo só lê |
+| `0x08` | `RIGHT_WRITE` | Mapear um buffer para escrita; enviar pedidos e saída a um dispositivo; ceder um buffer a um pedido em que o dispositivo escreve |
 | `0x10` | `RIGHT_MAP` | Mapear um buffer |
 | `0x20` | `RIGHT_DELEGATE` | Derivar, transferir ou conceder a capability |
-| `0x40` | `RIGHT_ADMIN` | Criar processos com a capability do sistema; encerrar ou interromper um processo |
+| `0x40` | `RIGHT_ADMIN` | Criar processos e reivindicar dispositivos com a capability do sistema; encerrar ou interromper um processo; abrir e reiniciar um dispositivo |
 
 ## Objetos
 
@@ -23,6 +23,7 @@ Toda autoridade de um processo é uma capability na sua tabela: um objeto do sup
 | Endpoint | 3 | `endpoint_create` | `SEND`, `RECEIVE`, `DELEGATE` |
 | Buffer | 4 | `buffer_create` | `READ`, `WRITE`, `MAP`, `DELEGATE` |
 | Resposta | 5 | Entregue ao servidor junto com uma chamada | `SEND`, uso único |
+| Dispositivo | 6 | `device_claim`, na tabela de quem reivindicou | `READ`, `WRITE`, `ADMIN`, `DELEGATE` |
 
 Um processo começa só com o que o criador concedeu no pedido de criação. Não há nomes globais, caminhos nem identificadores de processo que valham como autorização.
 
@@ -51,6 +52,8 @@ Escrever o inteiro de um handle em um payload não transfere nada. O número só
 ## Vida do objeto
 
 O objeto existe enquanto alguma capability o referencia. Quando o dono de um endpoint morre, ou fecha a capability com `RECEIVE`, o endpoint fecha: as mensagens pendentes são descartadas, quem envia recebe `PEER_CLOSED` e quem esperava resposta é acordado com o mesmo erro. Quando um processo termina, todas as capabilities da sua tabela são fechadas.
+
+Um dispositivo existe desde o boot e não é destruído. Fechar a última capability dele o deixa livre para outra reivindicação; se quem fechou tinha a sessão aberta, o supervisor reinicia o dispositivo antes, como descreve `devices.md`.
 
 ## Limites
 

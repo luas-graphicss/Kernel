@@ -70,7 +70,7 @@ Ao terminar, por qualquer motivo, o processo perde mapeamentos, capabilities, me
 
 ## Contadores
 
-`system_counters` exige `READ` na capability do sistema e grava 16 inteiros de 64 bits, little-endian. Um buffer com menos de 128 bytes devolve `INVALID_ARGUMENT`.
+`system_counters` exige `READ` na capability do sistema e grava 20 inteiros de 64 bits, little-endian. Um buffer com menos de 160 bytes devolve `INVALID_ARGUMENT`.
 
 | Índice | Contador |
 | --- | --- |
@@ -90,5 +90,9 @@ Ao terminar, por qualquer motivo, o processo perde mapeamentos, capabilities, me
 | 13 | Preempções |
 | 14 | Alocações recusadas |
 | 15 | Interrupções do timer |
+| 16 | Interrupções externas atendidas |
+| 17 | Pedidos de dispositivo em andamento |
+| 18 | Buffers fixados por pedidos de dispositivo |
+| 19 | Dispositivos em quarentena |
 
 As suítes comparam os contadores de recursos antes e depois de cada caso. A política faz o mesmo entre o início e o fim do `init`, e imprime `policy: resources=released` ou a lista do que mudou.

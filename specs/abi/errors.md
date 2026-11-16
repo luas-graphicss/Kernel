@@ -18,9 +18,21 @@ Um único conjunto de códigos vale para syscalls, mensagens e modelos Python. O
 | 11 | `PEER_CLOSED` | O outro lado morreu, fechou o endpoint ou não espera mais a resposta |
 | 12 | `OUT_OF_MEMORY` | Faltou memória física acima da reserva do supervisor |
 | 13 | `WOULD_DEADLOCK` | A espera fecharia um ciclo entre processos |
+| 14 | `IO_ERROR` | O dispositivo informou falha, não respondeu a um pedido sem efeito, ou o volume falhou e precisa ser montado de novo |
+| 15 | `NO_SPACE` | O volume não tem blocos livres para a operação |
+| 16 | `NOT_FOUND` | O caminho ou o nome não existe, ou o arquivo aberto foi removido |
+| 17 | `ALREADY_EXISTS` | O nome já existe no diretório |
+| 18 | `NOT_A_DIRECTORY` | A operação precisa de um diretório e encontrou um arquivo |
+| 19 | `IS_A_DIRECTORY` | A operação precisa de um arquivo e encontrou um diretório |
+| 20 | `NOT_EMPTY` | O diretório a remover ou a substituir ainda tem entradas |
+| 21 | `READ_ONLY` | A montagem ou o dispositivo não aceita mudança |
+| 22 | `CORRUPTED` | Um volume, uma imagem ou um bloco não confere com o formato ou com o checksum |
+| 23 | `UNKNOWN_OUTCOME` | Uma operação com efeito pode ter acontecido ou não: o dispositivo ou o serviço não confirmou a tempo |
 
 Uma syscall devolve o resultado em `a0`: valor maior ou igual a zero em caso de sucesso, ou o código negado em caso de erro. `debug_write` com ponteiro inválido devolve `-5`.
 
 Em Python os mesmos valores estão em `kernel_protocol.errors.codes`. As funções dos modelos e da biblioteca cliente levantam `KernelError` com o código. Em C estão em `native/include/kernel/abi/errors.h`. O teste `tests/conformance/test_abi_constants.py` compara os dois lados, e faz o mesmo com números de syscall, direitos, limites de processo e formatos.
 
-Uma operação que falha não deixa efeito parcial. Quem recebe `LIMIT_EXCEEDED` encontra as contas como estavam antes da chamada.
+Uma syscall que falha não deixa efeito parcial. Quem recebe `LIMIT_EXCEEDED` encontra as contas como estavam antes da chamada.
+
+Os códigos 14 a 23 vêm dos serviços de dispositivo e de arquivos; o supervisor só devolve `IO_ERROR`, em `device_open` e `device_reset`. `UNKNOWN_OUTCOME` é o único código que não diz se a operação aconteceu. Ele não autoriza repetir: quem o recebe consulta o estado, como descreve `specs/filesystem/file-service.md`.
