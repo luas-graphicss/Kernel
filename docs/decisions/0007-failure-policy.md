@@ -36,7 +36,7 @@ Todo boot termina com uma linha `kernel: status=ok` ou `kernel: status=failed`, 
 
 Um teste só passa quando a linha de status, as asserções do cenário e o código de saída do emulador concordam. Boot que estoura o deadline é falha, não teste ignorado.
 
-As seis primeiras linhas da tabela pertencem à primeira entrega. As demais dependem de processos, IPC, serviços e dispositivos.
+As oito primeiras linhas da tabela estão implementadas e têm cenário ou caso de suíte. Da morte de serviço existem o fechamento dos endpoints e a conclusão das esperas; o reinício pelo manifesto ainda não. Do flood existe a fila de eventos limitada, com descarte contabilizado. A linha de dispositivos depende dos drivers.
 
 ## Hipóteses a confirmar
 

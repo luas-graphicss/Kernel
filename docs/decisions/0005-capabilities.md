@@ -28,15 +28,15 @@ Regras de autoridade:
 - A identidade do remetente vem de metadados preenchidos pelo supervisor, nunca de um campo do payload.
 - Cada processo tem no máximo 128 capabilities. O `init` concede só o que o manifesto do serviço declara.
 
-A codificação e a tabela estão em `src/kernel_protocol/identity/`, e o formato em `specs/abi/handles.md`.
+A codificação e o modelo da tabela estão em `src/kernel_protocol/identity/`, o formato em `specs/abi/handles.md` e as operações em `specs/abi/capabilities.md`. A tabela que o supervisor aplica é nativa, em `native/supervisor/capabilities/` e `native/supervisor/objects/`.
 
 ## Consequências
 
-Lifecycle, revogação e transferência precisam de especificação própria antes do IPC. Um serviço não atua como procurador: ele autoriza a operação sobre o recurso com a capability que o cliente apresentou.
+Um serviço não atua como procurador: ele autoriza a operação sobre o recurso com a capability que o cliente apresentou.
 
-A primeira entrega cobre o modelo de identidade e a especificação. Nenhuma syscall recebe handle antes de o IPC existir.
+Toda syscall que recebe um handle o resolve na tabela de quem chama e confere o tipo do objeto e os direitos. O direito de receber de um endpoint não é derivado nem transferido: só quem criou o endpoint recebe dele.
 
 ## Hipóteses a confirmar
 
-- Revogar uma capability invalida as derivações com custo limitado pela profundidade 16.
+- O custo de revogar cabe em uma syscall. A revogação marca os descendentes e depois varre o registro de capabilities para remover os marcados; esse custo ainda não foi medido.
 - 24 bits de índice e 32 de geração bastam para a vida útil esperada de um slot.

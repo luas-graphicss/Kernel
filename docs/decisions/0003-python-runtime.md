@@ -34,9 +34,10 @@ O convidado não tem `typing`, `dataclasses`, `enum`, `asyncio` nem `struct`. O 
 
 Aprovação do `mypy` não prova que um módulo roda no convidado. A prova é o bytecode gerado pelo `mpy-cross` fixado e a execução no QEMU.
 
+Um runtime privado por processo cabe no perfil: a suíte `processes` mantém 16 processos vivos, 15 deles com o heap máximo de 4 MiB, e a reserva de frames do supervisor continua livre.
+
 ## Hipóteses a confirmar
 
 - O perfil `user` carrega programas que não estão congelados. Falta decidir entre compilar no processo ou carregar `.mpy` validado.
-- Ponto flutuante entra no perfil `user` junto com a ABI `lp64d` e o salvamento de contexto FP.
-- O custo de um runtime privado por processo cabe em 16 processos de até 4 MiB de heap.
+- Ponto flutuante entra no perfil `user` junto com a ABI `lp64d`. A troca de contexto já salva o estado FP de cada processo.
 - As pausas do GC supervisor cabem no orçamento de trabalho entre pontos seguros.

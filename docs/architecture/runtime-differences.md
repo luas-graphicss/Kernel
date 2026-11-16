@@ -12,7 +12,7 @@ O resultado dos contratos compartilhados. O cenário `runtime-selftest` executa 
 | --- | --- | --- |
 | Ponto flutuante | Desligado (`MICROPY_FLOAT_IMPL_NONE`) | Só inteiros, com divisão `//` |
 | Inteiros | Precisão arbitrária com MPZ, como no CPython | Sem restrição. O autoteste cobre aritmética, shifts e conversão para texto e para bytes além de 64 bits |
-| Biblioteca padrão | Mínima. O autoteste usa `builtins`, `sys` e `gc` | `src/` importa só módulos do projeto e `_supervisor`. Nada de `typing`, `dataclasses`, `enum`, `struct` ou `asyncio` |
+| Biblioteca padrão | Mínima. O autoteste usa `builtins`, `sys` e `gc` | `src/` importa só módulos do projeto e os módulos nativos: `_supervisor` nas políticas e `_process` na biblioteca cliente. Nada de `typing`, `dataclasses`, `enum`, `struct` ou `asyncio` |
 | Anotações de tipo | Descartadas pelo `mpy-cross`, nunca avaliadas | As anotações usam tipos embutidos e classes do projeto. Sem `typing`, não há `Protocol`, `TypeVar` nem genéricos próprios |
 | Código externo | Sem compilador e sem carga de `.mpy`: `eval`, `exec`, `compile`, `open` e `input` não existem, e `sys.path` contém só `.frozen` | Todo módulo do convidado entra congelado no build |
 | Exceções | Os mesmos tipos embutidos nos casos cobertos pelo autoteste; mensagens e traceback têm outro formato | Comparar o tipo e os campos próprios, como o código de `KernelError`. Nunca o texto da mensagem |
@@ -25,4 +25,4 @@ O resultado dos contratos compartilhados. O cenário `runtime-selftest` executa 
 
 Um módulo de `src/` só é aceito quando o `mpy-cross` fixado o compila e o cenário que o exercita passa no QEMU. A aprovação do `mypy` e dos testes em CPython não basta. Se um comportamento divergir, a correção é reescrever o código no subconjunto comum. Uma diferença só entra nesta tabela quando não muda o resultado de nenhum contrato compartilhado.
 
-Os casos puros do autoteste e o programa `init` também rodam em CPython, em `tests/conformance/test_guest_programs.py`, para que a mesma verificação exista nos dois interpretadores.
+Os casos puros do autoteste também rodam em CPython, em `tests/conformance/test_guest_programs.py`, para que a mesma verificação exista nos dois interpretadores. O supervisor Python, a biblioteca cliente e os serviços rodam em CPython contra dublês dos módulos nativos, em `tests/conformance/doubles/`.

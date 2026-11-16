@@ -1,18 +1,22 @@
 # Kernel
 
-Kernel Python-first para RISC-V de 64 bits. As políticas do sistema são escritas em Python e rodam em MicroPython dentro do supervisor, em S-mode. O primeiro processo de usuário é outro MicroPython, em U-mode. O código nativo, em C17 e Assembly, cobre o que depende da máquina: boot, traps, validação de imagens, entrada em U-mode e chamadas de processo.
+Kernel Python-first para RISC-V de 64 bits. As políticas do sistema são escritas em Python e rodam em MicroPython dentro do supervisor, em S-mode. Cada processo de usuário é outro MicroPython, em U-mode, com o próprio espaço de endereçamento. O código nativo, em C17 e Assembly, cobre o que depende da máquina e o que não pode confiar em Python: boot, traps, memória virtual, troca de contexto, capabilities, IPC e validação das chamadas de processo.
 
 O alvo é a máquina `virt` do QEMU com o firmware OpenSBI. O convidado não tem Linux e não usa semihosting.
 
 ## O que existe hoje
 
 - Boot pelo OpenSBI com o DTB validado, console NS16550 e diagnóstico de trap.
-- Política Python congelada na imagem do kernel. Ela confere o perfil de recursos, admite o módulo de boot, executa o processo e recolhe o que ele ocupava.
-- `init` em U-mode: um MicroPython separado, que fala com o supervisor pelas chamadas `exit` e `debug write`.
+- Memória virtual Sv39: alocador de frames com reserva para o supervisor e um espaço de endereçamento por processo, com código sem escrita, dados sem execução e página de guarda sob a stack.
+- Até 16 processos em U-mode, cada um com um MicroPython privado. O timer preempta quem não coopera, e a troca de contexto preserva registradores inteiros e de ponto flutuante.
+- Capabilities com handles geracionais: derivação que só reduz direitos, transferência por IPC ou na criação de um processo, revogação das derivadas e cota por processo.
+- IPC por endpoints, com envio, recepção e chamada com resposta correlacionada, deadline, cancelamento e término definido quando o outro lado morre. Buffers de memória concedidos por capability para dados maiores que uma mensagem.
+- Política Python congelada na imagem do kernel. Ela confere o perfil de recursos, admite processos dentro das cotas e escolhe quem executa: quatro prioridades, round-robin, aging e doação limitada de prioridade a quem atende uma chamada.
+- `init` em U-mode, que inicia os serviços do seu manifesto com as capabilities declaradas, confere que respondem e os encerra. O único serviço é o `echo`.
 - Modelos puros de handles geracionais, seleção de processos e contabilização de recursos. Um corpus de 10.000 transições roda em CPython e dentro do convidado, e os resultados precisam ser iguais.
 - `kernel-tool`, que baixa a toolchain fixada por hash, compila, inicia o QEMU com deadline, executa os cenários e inspeciona as imagens.
 
-Ainda não existem MMU, preempção, IPC, drivers, sistema de arquivos nem rede. O processo de usuário roda em U-mode sem tabela de páginas: o que está provado é a entrada e o retorno controlados, não o isolamento de memória.
+Ainda não existem drivers além do console, sistema de arquivos, rede nem shell. O kernel usa um único hart, e o isolamento foi exercitado só no QEMU com TCG.
 
 ## Requisitos do host
 
@@ -41,13 +45,23 @@ uv run mypy --strict host src
 uv run pytest tests/host tests/conformance
 uv run kernel-tool native-check
 uv run kernel-tool test --suite bootstrap
+uv run kernel-tool test --suite memory
+uv run kernel-tool test --suite processes
+uv run kernel-tool test --suite capabilities
+uv run kernel-tool test --suite ipc
+uv run kernel-tool test --suite scheduling
 uv run kernel-tool verify-artifacts --reproduce
 ```
 
 | Comando | O que confere |
 | --- | --- |
 | `native-check` | Testes nativos hospedados com sanitizers e a análise estática do supervisor |
-| `test --suite bootstrap` | Oito cenários no QEMU: boot repetido, autoteste do runtime, DTB grande demais, DTB sem memória, RAM insuficiente, segmento incompatível, falha em U-mode e trap no supervisor |
+| `test --suite bootstrap` | Nove cenários no QEMU: boot repetido, autoteste do runtime, DTB grande demais, DTB sem memória, RAM insuficiente, segmento incompatível, falha em U-mode e trap no supervisor, com o runtime parado e com o heap dele esgotado |
+| `test --suite memory` | Programas adversariais em U-mode: acesso a memória de outro processo, do supervisor, livre, de dispositivos e à página de guarda; ponteiros inválidos em syscalls; buffers compartilhados; memória zerada entre processos; cotas e reserva do supervisor |
+| `test --suite processes` | Status de término, autoridade e validação na criação, preempção de um laço sem cooperação, preservação de registradores, 16 processos simultâneos e liberação de recursos no término. Dois cenários à parte: falha de cada alocação de uma criação, e 10.000 ciclos de processo e IPC sem crescimento de recursos |
+| `test --suite capabilities` | Handles antigos e forjados, delegação atenuada, revogação com descendentes, cota, ausência de autoridade ambiente e mapeamentos que seguem a capability |
+| `test --suite ipc` | Mensagens malformadas, entrega e transferência, limites de fila, morte do outro lado, cancelamento, deadlines, correlação de respostas, ownership do endpoint e recusa de deadlock |
+| `test --suite scheduling` | Round-robin, prioridade sem starvation, doação de prioridade, limite da cadeia de espera, deadline disputando com a resposta, limites do relógio e yield. Um cenário à parte registra o trace de escalonamento do boot |
 | `verify-artifacts --reproduce` | Ligação estática, origem de cada entrada do link, layout e hashes das imagens; compila de novo em outro diretório e exige imagens idênticas |
 | `inventory` | Versão e hash de cada ferramenta usada no build |
 
@@ -61,10 +75,10 @@ O `kernel-tool` termina com 0 em sucesso, 1 quando uma verificação falha, 2 em
 | --- | --- |
 | `native/` | Supervisor em C17 e Assembly RISC-V |
 | `ports/micropython/` | Port do MicroPython: parte comum, perfil `supervisor` e perfil `user` |
-| `src/` | Python do convidado: `kernel_protocol`, `kernel_core` e `kernel_services` |
+| `src/` | Python do convidado: `kernel_protocol`, `kernel_core`, `kernel_client` e `kernel_services` |
 | `host/kernel_tool/` | Ferramenta de build, execução e verificação |
-| `tests/` | Testes do host, corpus de conformidade, testes nativos hospedados e autoteste do convidado |
-| `specs/abi/` | Handles, erros, mensagens, chamadas de processo, imagem de usuário e perfil de recursos |
+| `tests/` | Testes do host, corpus de conformidade, testes nativos hospedados, autoteste do convidado e programas adversariais das suítes |
+| `specs/abi/` | Handles, erros, syscalls, capabilities, mensagens, buffers, processos, imagem de usuário e perfil de recursos |
 | `config/profiles/` | Máquina, layout de memória, limites e deadlines de cada perfil |
 | `docs/` | Decisões de arquitetura, requisitos, segurança e operação |
 

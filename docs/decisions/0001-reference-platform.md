@@ -24,16 +24,17 @@ Versões, URLs e hashes ficam em `toolchain.lock.toml`. O perfil executável fic
 
 Endereços de dispositivos e de memória vêm do DTB validado. O único endereço fixo no código é o de linkagem do kernel, `0x80200000`, que é o ponto de entrada que o OpenSBI usa nesta máquina.
 
-O código nativo do supervisor é compilado para `rv64imac_zicsr_zifencei` com ABI `lp64`. Ele não executa instruções de ponto flutuante, então uma trap nunca altera o estado FP de quem foi interrompido.
+O código nativo do supervisor é compilado para `rv64imac_zicsr_zifencei` com ABI `lp64` e roda com `sstatus.FS` desligado. As únicas instruções de ponto flutuante do kernel ficam na entrada e na saída de U-mode, em Assembly, e salvam e restauram `f0` a `f31` e `fcsr` do processo.
 
 ## Consequências
 
 Aprovação no QEMU não homologa hardware físico. SMP, extensões vetoriais e de virtualização ficam fora: `h=off` e `v=off` impedem que uma aplicação dependa delas por acidente.
 
+Sv39 com páginas de 4 KiB comporta o orçamento do perfil: a suíte `processes` mantém 16 processos vivos ao mesmo tempo, cada um com o próprio espaço de endereçamento, e a reserva de frames do supervisor continua livre.
+
 Com este firmware, o motivo passado a `sbi_system_reset` não chega ao código de saída do QEMU, porque o desligamento passa pelo `syscon-poweroff`. O estado final do boot é a linha `kernel: status=` na serial, avaliada junto com o código de saída do emulador.
 
 ## Hipóteses a confirmar
 
-- O runtime de usuário passa para a ABI `lp64d` quando a troca de contexto salvar registradores FP e `fcsr`. Até lá `sstatus.FS` fica desligado e os dois perfis do runtime são compilados sem ponto flutuante.
-- Sv39 com páginas de 4 KiB atende ao orçamento de 16 processos. A prova depende da MMU.
+- O runtime de usuário passa para a ABI `lp64d`. A troca de contexto já salva os registradores FP e `fcsr`, e um processo pode executar instruções de ponto flutuante, mas os dois perfis do runtime continuam compilados sem elas.
 - PLIC e VirtIO-MMIO estão fixados no perfil, mas nenhum driver os usa ainda.
