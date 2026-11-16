@@ -1,0 +1,29 @@
+package(
+    "kernel_protocol",
+    files=(
+        "__init__.py",
+        "errors/__init__.py",
+        "errors/codes.py",
+        "identity/__init__.py",
+        "identity/handles.py",
+        "wire/__init__.py",
+        "wire/message.py",
+    ),
+    base_path="$(KERNEL_ROOT)/src",
+)
+package(
+    "kernel_core",
+    files=(
+        "__init__.py",
+        "bootstrap.py",
+        "memory/__init__.py",
+        "memory/budget.py",
+        "processes/__init__.py",
+        "processes/accounting.py",
+        "processes/admission.py",
+        "processes/lifecycle.py",
+        "scheduling/__init__.py",
+        "scheduling/selection.py",
+    ),
+    base_path="$(KERNEL_ROOT)/src",
+)

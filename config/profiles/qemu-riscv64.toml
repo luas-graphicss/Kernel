@@ -1,0 +1,36 @@
+name = "qemu-riscv64"
+
+[machine]
+emulator = "qemu-system-riscv64"
+machine = "virt,aia=none,acpi=off"
+cpu = "rv64,h=off,v=off"
+harts = 1
+memory_mib = 256
+accelerator = "tcg"
+globals = ["virtio-mmio.force-legacy=false"]
+firmware = "opensbi"
+
+[layout]
+kernel_base = 0x80200000
+user_region_base = 0x81000000
+user_region_bytes = 0x800000
+supervisor_stack_bytes = 0x20000
+emergency_stack_bytes = 0x4000
+user_heap_bytes = 0x100000
+user_stack_bytes = 0x10000
+
+[limits]
+memory_bytes = 268435456
+processes = 16
+supervisor_heap_bytes = 8388608
+process_heap_bytes = 4194304
+capabilities_per_process = 128
+delegation_depth = 16
+ipc_inline_payload_bytes = 4096
+endpoint_messages = 64
+ipc_pending_bytes_per_process = 1048576
+ipc_pending_bytes_global = 16777216
+
+[deadlines]
+boot_seconds = 60
+selftest_seconds = 600

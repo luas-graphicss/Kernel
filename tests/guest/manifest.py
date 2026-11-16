@@ -1,0 +1,32 @@
+include("$(KERNEL_ROOT)/ports/micropython/supervisor/manifest.py")
+package(
+    "corpus",
+    files=(
+        "__init__.py",
+        "accounting_case.py",
+        "digest.py",
+        "failure.py",
+        "identity_case.py",
+        "prng.py",
+        "runner.py",
+        "scheduling_case.py",
+        "wire_case.py",
+    ),
+    base_path="$(KERNEL_ROOT)/tests/conformance",
+)
+package(
+    "runtime_selftest",
+    files=(
+        "__init__.py",
+        "bindings_case.py",
+        "bytes_case.py",
+        "checks.py",
+        "collection_case.py",
+        "exceptions_case.py",
+        "imports_case.py",
+        "integers_case.py",
+        "main.py",
+        "restart.py",
+    ),
+    base_path="$(KERNEL_ROOT)/tests/guest",
+)

@@ -1,0 +1,48 @@
+#ifndef KERNEL_PORT_MPCONFIGSHARED_H
+#define KERNEL_PORT_MPCONFIGSHARED_H
+
+#include <alloca.h>
+#include <stddef.h>
+#include <stdint.h>
+
+#define MICROPY_CONFIG_ROM_LEVEL (MICROPY_CONFIG_ROM_LEVEL_MINIMUM)
+
+#define MICROPY_ENABLE_COMPILER (0)
+#define MICROPY_ENABLE_EXTERNAL_IMPORT (1)
+#define MICROPY_PERSISTENT_CODE_LOAD (0)
+#define MICROPY_HELPER_REPL (0)
+#define MICROPY_KBD_EXCEPTION (0)
+
+#define MICROPY_ENABLE_GC (1)
+#define MICROPY_GCREGS_SETJMP (0)
+#define MICROPY_GC_ALLOC_THRESHOLD (1)
+#define MICROPY_ENABLE_FINALISER (0)
+#define MICROPY_STACK_CHECK (1)
+#define MICROPY_STACK_CHECK_MARGIN (2048)
+
+#define MICROPY_LONGINT_IMPL (MICROPY_LONGINT_IMPL_MPZ)
+#define MICROPY_FLOAT_IMPL (MICROPY_FLOAT_IMPL_NONE)
+
+#define MICROPY_ERROR_REPORTING (MICROPY_ERROR_REPORTING_NORMAL)
+#define MICROPY_ENABLE_SOURCE_LINE (1)
+#define MICROPY_USE_INTERNAL_ERRNO (1)
+#define MICROPY_FULL_CHECKS (1)
+
+#define MICROPY_PY_BUILTINS_BYTEARRAY (1)
+#define MICROPY_PY_BUILTINS_SLICE (1)
+#define MICROPY_PY_GC (1)
+#define MICROPY_PY_SYS_ARGV (0)
+#define MICROPY_PY_SYS_EXIT (0)
+#define MICROPY_PY_SYS_PATH_ARGV_DEFAULTS (0)
+#define MICROPY_PY_SYS_PLATFORM "kernel"
+
+typedef intptr_t mp_int_t;
+typedef uintptr_t mp_uint_t;
+typedef long mp_off_t;
+
+#define MP_STATE_PORT MP_STATE_VM
+#define MP_PLAT_PRINT_STRN(text, length) platform_console_write(text, length)
+
+void platform_console_write(const char *bytes, size_t length);
+
+#endif
