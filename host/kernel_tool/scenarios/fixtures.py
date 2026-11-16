@@ -33,6 +33,8 @@ def boot_module_file(kind: BootModule, outputs: BuildOutputs, directory: Path) -
             return outputs.init_image
         case BootModule.FAULT:
             return outputs.fault_image
+        case BootModule.TESTS:
+            return outputs.tests_image
         case BootModule.MISPLACED_SEGMENT:
             image = outputs.init_image.read_bytes()
             misplaced = directory / "misplaced-segment.img"

@@ -20,6 +20,7 @@ from kernel_tool.toolchain.fetch import sha256_file
 from kernel_tool.toolchain.resolve import Toolchain
 
 REPORTED_SYMBOLS = 8
+PAGE_BYTES = 4096
 
 
 @dataclass(frozen=True, slots=True)
@@ -60,12 +61,12 @@ def verify_artifacts(
     outputs: BuildOutputs, profile: Profile, toolchain: Toolchain
 ) -> ArtifactReport:
     layout = profile.layout
-    supervisor = AddressRange(layout.kernel_base, layout.user_region_base)
+    supervisor = AddressRange(layout.kernel_base, layout.kernel_base + profile.limits.memory_bytes)
     user = AddressRange(layout.user_region_base, layout.user_region_base + layout.user_region_bytes)
     expectations = (
         (outputs.kernel, supervisor, layout.kernel_base),
         (outputs.selftest_kernel, supervisor, layout.kernel_base),
-        (outputs.init_program, user, None),
+        *((program, user, None) for program in outputs.user_programs),
     )
 
     executables = []
@@ -83,7 +84,7 @@ def verify_artifacts(
             f"{path.name}: links {origin} from outside the build" for origin in origins.foreign
         )
         executables.append(_executable_record(path, image, origins.compiler_library_members))
-    for path in (outputs.init_image, outputs.fault_image):
+    for path in outputs.user_images:
         problems.extend(f"{path.name}: {problem}" for problem in user_image_problems(path, profile))
 
     return ArtifactReport(
@@ -133,6 +134,11 @@ def user_image_problems(path: Path, profile: Profile) -> list[str]:
         problems.append(f"needs {header.memory_bytes} bytes, more than the user region")
     if header.file_bytes != len(image):
         problems.append(f"declares {header.file_bytes} bytes but the file has {len(image)}")
+    if any(
+        size % PAGE_BYTES
+        for size in (header.text_bytes, header.rodata_bytes, header.data_bytes, header.stack_bytes)
+    ):
+        problems.append("has a segment that is not a whole number of pages")
     if header.heap_bytes > profile.limits.process_heap_bytes:
         problems.append(f"reserves a heap of {header.heap_bytes} bytes, above the process limit")
     return problems

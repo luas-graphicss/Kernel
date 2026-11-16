@@ -13,6 +13,7 @@ class BootModule(StrEnum):
     NONE = "none"
     INIT = "init"
     FAULT = "fault"
+    TESTS = "tests"
     MISPLACED_SEGMENT = "misplaced-segment"
 
 
@@ -25,6 +26,7 @@ class DeviceTreeSource(StrEnum):
 class Deadline(StrEnum):
     BOOT = "boot"
     SELFTEST = "selftest"
+    SOAK = "soak"
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)

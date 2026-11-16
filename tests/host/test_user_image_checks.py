@@ -14,8 +14,10 @@ def write_image(tmp_path: Path, **changes: int) -> Path:
     fields = {
         "load_base": REGION,
         "file_bytes": FILE_BYTES,
-        "memory_bytes": 0x4000,
         "entry": REGION + HEADER.size,
+        "text_bytes": 0x1000,
+        "rodata_bytes": 0x1000,
+        "data_bytes": 0x1000,
         "heap_bytes": 0x1000,
         "stack_bytes": 0x1000,
     } | changes
@@ -33,14 +35,16 @@ def test_each_mismatch_with_the_profile_is_reported(tmp_path: Path) -> None:
         tmp_path,
         load_base=REGION + 0x1000,
         file_bytes=FILE_BYTES + 1,
-        memory_bytes=PROFILE.layout.user_region_bytes + 1,
+        text_bytes=PROFILE.layout.user_region_bytes,
+        data_bytes=0x1001,
         heap_bytes=PROFILE.limits.process_heap_bytes + 1,
     )
 
     problems = user_image_problems(path, PROFILE)
 
-    assert len(problems) == 4
+    assert len(problems) == 5
     assert "instead of the user region" in problems[0]
     assert "more than the user region" in problems[1]
     assert f"but the file has {FILE_BYTES}" in problems[2]
-    assert "above the process limit" in problems[3]
+    assert "not a whole number of pages" in problems[3]
+    assert "above the process limit" in problems[4]

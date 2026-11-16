@@ -125,6 +125,7 @@ def _deadlines(section: Section) -> Deadlines:
     deadlines = Deadlines(
         boot_seconds=section.positive("boot_seconds"),
         selftest_seconds=section.positive("selftest_seconds"),
+        soak_seconds=section.positive("soak_seconds"),
     )
     section.finish()
     return deadlines

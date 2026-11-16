@@ -97,9 +97,13 @@ def _device_tree_file(scenario: Scenario, context: SuiteContext, memory_mib: int
 
 
 def _deadline_seconds(scenario: Scenario, profile: Profile) -> float:
-    if scenario.deadline is Deadline.SELFTEST:
-        return float(profile.deadlines.selftest_seconds)
-    return float(profile.deadlines.boot_seconds)
+    match scenario.deadline:
+        case Deadline.BOOT:
+            return float(profile.deadlines.boot_seconds)
+        case Deadline.SELFTEST:
+            return float(profile.deadlines.selftest_seconds)
+        case Deadline.SOAK:
+            return float(profile.deadlines.soak_seconds)
 
 
 def _session_failures(session: SessionResult, deadline: float) -> list[str]:
