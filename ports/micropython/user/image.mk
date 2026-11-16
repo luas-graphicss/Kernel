@@ -15,15 +15,16 @@ user_link_flags = \
 	--defsym=USER_HEAP_BYTES=$(1) \
 	--defsym=USER_STACK_BYTES=$(2)
 
+link_runtime_image = $(CROSS_COMPILE)ld $(call user_link_flags,$(USER_HEAP_BYTES),$(USER_STACK_BYTES)) \
+	-Map=$@.map -o $@ $(USER_HEADER_OBJECT) $(USER_START_OBJECT) $(1) $(LIBC_OBJECT) $(LIBGCC)
+
 $(BUILD)/$(USER_PORT)/%.o: $(USER_PORT)/%.S
 	@mkdir -p $(dir $@)
 	$(CROSS_COMPILE)gcc $(NATIVE_CFLAGS) -c -o $@ $<
 
 $(INIT_ELF): $(USER_HEADER_OBJECT) $(USER_START_OBJECT) $(INIT_FROZEN) $(USER_LIBRARY) $(LIBC_OBJECT) $(USER_LINKER_SCRIPT)
 	@mkdir -p $(dir $@)
-	$(CROSS_COMPILE)ld $(call user_link_flags,$(USER_HEAP_BYTES),$(USER_STACK_BYTES)) \
-		-Map=$@.map -o $@ $(USER_HEADER_OBJECT) $(USER_START_OBJECT) $(INIT_FROZEN) \
-		$(USER_LIBRARY) $(LIBC_OBJECT) $(LIBGCC)
+	$(call link_runtime_image,$(INIT_FROZEN) $(USER_LIBRARY))
 
 $(BUILD)/%.img: $(USER_BUILD)/%.elf
 	$(CROSS_COMPILE)objcopy -O binary $< $@

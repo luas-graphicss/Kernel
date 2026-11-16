@@ -4,6 +4,8 @@
 #include "py/runtime.h"
 
 #include "bindings/bindings.h"
+#include "kernel/diagnostics/counters.h"
+#include "kernel/memory/physical_memory.h"
 #include "kernel/startup/environment.h"
 #include "kernel/startup/profile.h"
 
@@ -60,3 +62,26 @@ static mp_obj_t supervisor_arguments(void)
     return mp_obj_new_str(arguments, strlen(arguments));
 }
 MP_DEFINE_CONST_FUN_OBJ_0(supervisor_arguments_obj, supervisor_arguments);
+
+static mp_obj_t supervisor_memory(void)
+{
+    const struct frame_pool *pool = physical_memory_pool();
+    const uint64_t values[] = {
+        FRAME_BYTES,
+        pool->usable_frames,
+        pool->free_frames,
+        pool->reserve_frames,
+    };
+
+    return supervisor_new_tuple_of_integers(values, MP_ARRAY_SIZE(values));
+}
+MP_DEFINE_CONST_FUN_OBJ_0(supervisor_memory_obj, supervisor_memory);
+
+static mp_obj_t supervisor_counters(void)
+{
+    uint64_t values[COUNTERS];
+
+    resource_counters_read(values);
+    return supervisor_new_tuple_of_integers(values, COUNTERS);
+}
+MP_DEFINE_CONST_FUN_OBJ_0(supervisor_counters_obj, supervisor_counters);

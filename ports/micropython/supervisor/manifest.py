@@ -6,8 +6,12 @@ package(
         "errors/codes.py",
         "identity/__init__.py",
         "identity/handles.py",
+        "identity/rights.py",
+        "processes/__init__.py",
+        "processes/status.py",
         "wire/__init__.py",
         "wire/message.py",
+        "wire/spawn.py",
     ),
     base_path="$(KERNEL_ROOT)/src",
 )
@@ -16,6 +20,8 @@ package(
     files=(
         "__init__.py",
         "bootstrap.py",
+        "events/__init__.py",
+        "events/outcomes.py",
         "memory/__init__.py",
         "memory/budget.py",
         "processes/__init__.py",
@@ -24,6 +30,8 @@ package(
         "processes/lifecycle.py",
         "scheduling/__init__.py",
         "scheduling/selection.py",
+        "supervision/__init__.py",
+        "supervision/supervisor.py",
     ),
     base_path="$(KERNEL_ROOT)/src",
 )

@@ -4,22 +4,20 @@
 
 #include "kernel/abi/syscalls.h"
 #include "process_calls.h"
+#include "startup.h"
 
 #define FATAL_EXIT_STATUS 2u
 #define FATAL_PREFIX "runtime: fatal reason="
 
-extern char user_heap_start[];
-extern char user_heap_end[];
-extern char user_stack_bottom[];
-extern char user_stack_top[];
-
 struct runtime_memory platform_runtime_memory(void)
 {
+    const struct process_startup *startup = process_startup();
+
     return (struct runtime_memory){
-        .heap_start = user_heap_start,
-        .heap_end = user_heap_end,
-        .stack_top = user_stack_top,
-        .stack_bytes = (size_t)(user_stack_top - user_stack_bottom),
+        .heap_start = startup->heap_start,
+        .heap_end = startup->heap_end,
+        .stack_top = startup->stack_top,
+        .stack_bytes = (size_t)(startup->stack_top - startup->stack_bottom),
     };
 }
 

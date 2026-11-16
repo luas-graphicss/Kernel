@@ -1,9 +1,44 @@
 package(
+    "kernel_protocol",
+    files=(
+        "__init__.py",
+        "errors/__init__.py",
+        "errors/codes.py",
+        "identity/__init__.py",
+        "identity/rights.py",
+        "processes/__init__.py",
+        "processes/status.py",
+        "syscalls/__init__.py",
+        "syscalls/numbers.py",
+        "wire/__init__.py",
+        "wire/message.py",
+        "wire/spawn.py",
+    ),
+    base_path="$(KERNEL_ROOT)/src",
+)
+package(
+    "kernel_client",
+    files=(
+        "__init__.py",
+        "calls.py",
+        "capabilities.py",
+        "ipc.py",
+        "memory.py",
+        "processes.py",
+        "system.py",
+    ),
+    base_path="$(KERNEL_ROOT)/src",
+)
+package(
     "kernel_services",
     files=(
         "__init__.py",
+        "echo/__init__.py",
+        "echo/main.py",
+        "echo/protocol.py",
         "init/__init__.py",
         "init/main.py",
+        "init/manifest.py",
     ),
     base_path="$(KERNEL_ROOT)/src",
 )
