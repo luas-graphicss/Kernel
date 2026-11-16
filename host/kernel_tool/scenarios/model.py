@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from enum import StrEnum
 
+from kernel_tool.network.orders import Order
+from kernel_tool.network.plan import NetworkPlan
 from kernel_tool.verification.transcript import KernelStatus
 
 
@@ -27,6 +29,7 @@ class Deadline(StrEnum):
     BOOT = "boot"
     SELFTEST = "selftest"
     SOAK = "soak"
+    SESSION = "session"
 
 
 class DataSource(StrEnum):
@@ -71,6 +74,31 @@ NO_DEVICES = Devices()
 SYSTEM_DEVICES = Devices(boot=True, data=DataDisk(), entropy=True)
 
 
+@dataclass(frozen=True, slots=True)
+class BootEntry:
+    path: str
+    source: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class Step:
+    awaited: str
+    typed: str = ""
+    orders: tuple[Order, ...] = ()
+
+
+@dataclass(frozen=True, slots=True)
+class Reported:
+    event: str
+    fields: tuple[tuple[str, object], ...] = ()
+
+
+@dataclass(frozen=True, slots=True)
+class Network:
+    plan: NetworkPlan
+    reported: tuple[Reported, ...] = ()
+
+
 @dataclass(frozen=True, slots=True, kw_only=True)
 class Scenario:
     name: str
@@ -87,3 +115,6 @@ class Scenario:
     compares_corpus: bool = False
     devices: Devices = NO_DEVICES
     serial_input: str = ""
+    steps: tuple[Step, ...] = ()
+    network: Network | None = None
+    boot_overlay: tuple[BootEntry, ...] = ()
