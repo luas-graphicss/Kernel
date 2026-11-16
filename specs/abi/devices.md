@@ -26,7 +26,7 @@ Um transporte só é registrado se os registradores começam em uma página, fic
 | `device_list(sistema, endereço, capacidade)` | Exige `READ` na capability do sistema e um buffer de pelo menos 144 bytes. Grava uma entrada de 16 bytes por dispositivo presente e devolve quantas gravou |
 | `device_claim(sistema, slot)` | Exige `ADMIN` na capability do sistema. Devolve um handle do dispositivo com `READ`, `WRITE`, `ADMIN` e `DELEGATE` |
 
-Entrada da lista, com quatro inteiros de 32 bits: slot, tipo, modelo e estado. O tipo é 1 para a porta serial e 2 para VirtIO. O modelo é o identificador de dispositivo do VirtIO: 2 para bloco, 4 para entropia.
+Entrada da lista, com quatro inteiros de 32 bits: slot, tipo, modelo e estado. O tipo é 1 para a porta serial e 2 para VirtIO. O modelo é o identificador de dispositivo do VirtIO: 1 para rede, 2 para bloco, 4 para entropia.
 
 Um dispositivo tem um dono por vez. `device_claim` devolve `BAD_STATE` enquanto existir alguma capability do dispositivo, em qualquer processo, e `INVALID_ARGUMENT` para um slot vazio. A capability pode ser derivada e concedida como qualquer outra; o `init` reivindica cada dispositivo e concede ao driver só `READ`, `WRITE` e `ADMIN`.
 
@@ -53,7 +53,7 @@ A porta serial aparece sempre como `ready`.
 
 `device_open(dispositivo, features, endereço da sessão)` exige `ADMIN`. `features` só pode ter os bits 0 a 23, que são os bits próprios de cada tipo de dispositivo; qualquer outro devolve `INVALID_ARGUMENT`.
 
-O supervisor reinicia o dispositivo e negocia: exige `VIRTIO_F_VERSION_1`, aceita só os bits pedidos que o dispositivo oferece, confere que o dispositivo manteve `FEATURES_OK` e programa a fila 0 com 16 descritores. Um dispositivo sem a versão 1, que recusa as features ou cuja fila é menor é marcado como falho no próprio registrador de status, e a chamada devolve `UNSUPPORTED`.
+O supervisor reinicia o dispositivo e negocia: exige `VIRTIO_F_VERSION_1`, aceita só os bits pedidos que o dispositivo oferece, confere que o dispositivo manteve `FEATURES_OK` e programa as filas, com 16 descritores cada. A fila 0 é obrigatória. A fila 1 é programada quando o dispositivo a oferece, que é o caso do `virtio-net`, com uma fila para receber e outra para transmitir. Um dispositivo sem a versão 1, que recusa as features ou cuja fila é menor é marcado como falho no próprio registrador de status, e a chamada devolve `UNSUPPORTED`.
 
 | Condição | Erro |
 | --- | --- |
@@ -61,7 +61,7 @@ O supervisor reinicia o dispositivo e negocia: exige `VIRTIO_F_VERSION_1`, aceit
 | O reset não foi confirmado | `IO_ERROR`, e o dispositivo vai para quarentena |
 | Bloco da sessão sem permissão de escrita | `BAD_ADDRESS` |
 
-O bloco da sessão tem 24 bytes: features aceitas, em 8 bytes, geração da sessão, em 8, e tamanho da fila, em 4. A geração muda a cada reset.
+O bloco da sessão tem 24 bytes: features aceitas, em 8 bytes, geração da sessão, em 8, tamanho da fila, em 4, e quantidade de filas programadas, em 4. A geração muda a cada reset.
 
 Quem abriu a sessão é o único que usa `device_config`, `device_submit` e `device_wait`. Outro processo com a mesma capability recebe `BAD_STATE`.
 
@@ -73,7 +73,7 @@ Quem abriu a sessão é o único que usa `device_config`, `device_submit` e `dev
 
 | Offset | Tamanho | Campo | Regra |
 | --- | --- | --- | --- |
-| 0 | 4 | `queue` | Zero |
+| 0 | 4 | `queue` | Índice de uma fila programada na sessão: 0 ou 1 |
 | 4 | 4 | `segment_count` | De 1 a 4 |
 | 8 | 24 por segmento | `segments` | Até quatro |
 
@@ -95,12 +95,13 @@ O driver nomeia memória por handle e offset. Ele nunca informa nem recebe um en
 | Buffer sem `WRITE` em segmento que o dispositivo escreve, ou sem `READ` nos demais | `ACCESS_DENIED` |
 | Faixa fora do buffer, comprimento zero, flag desconhecida ou campo reservado preenchido | `INVALID_ARGUMENT` |
 | Segmento de leitura depois de um segmento de escrita | `INVALID_ARGUMENT` |
-| Quatro pedidos entre os em andamento e os concluídos ainda não entregues | `LIMIT_EXCEEDED` |
+| Fila que a sessão não programou | `INVALID_ARGUMENT` |
+| Quatro pedidos na mesma fila, entre os em andamento e os concluídos ainda não entregues | `LIMIT_EXCEEDED` |
 | Dispositivo que não está `ready` | `BAD_STATE` |
 
 Um pedido aceito fixa cada buffer, grava os descritores na fila, que fica em memória do supervisor e não é mapeada em nenhum processo, e avisa o dispositivo. A chamada devolve um token maior que zero, que não se repete naquele dispositivo. Um pedido recusado não fixa nada.
 
-`device_wait(dispositivo, endereço da conclusão, deadline)` exige `READ` e entrega uma conclusão de 16 bytes: o token, em 8 bytes, e quantos bytes o dispositivo escreveu, em 4. Devolve 1. Sem conclusão pronta a chamada espera até o deadline, e então devolve `TIMED_OUT`. Com o dispositivo fora de `ready` e nada a entregar, devolve `BAD_STATE`.
+`device_wait(dispositivo, endereço da conclusão, deadline)` exige `READ` e entrega uma conclusão de 16 bytes: o token, em 8 bytes, e quantos bytes o dispositivo escreveu, em 4. As conclusões das duas filas chegam pela mesma chamada, e o driver as separa pelo token. Devolve 1. Sem conclusão pronta a chamada espera até o deadline, e então devolve `TIMED_OUT`. Com o dispositivo fora de `ready` e nada a entregar, devolve `BAD_STATE`.
 
 ## O que o supervisor confere do dispositivo
 
@@ -148,10 +149,10 @@ Uma interrupção externa só é aceita enquanto um processo executa em U-mode o
 | Limite | Valor |
 | --- | --- |
 | Dispositivos | 9: a porta serial e 8 transportes |
-| Filas por dispositivo | 1, com 16 descritores |
-| Pedidos em andamento mais conclusões não entregues | 4 por dispositivo |
+| Filas por dispositivo | Até 2, com 16 descritores cada |
+| Pedidos em andamento mais conclusões não entregues | 4 por fila |
 | Segmentos por pedido | 4 |
 | Espaço de configuração legível | 256 bytes |
 | Transferência serial | 256 bytes por chamada |
 
-Os valores estão em `native/include/kernel/abi/devices.h` e em `kernel_protocol.devices.layout`. A suíte `devices` cobre descoberta e posse, negociação, validação de pedidos, pedidos de bloco, entropia, porta serial e término de um driver com pedidos em andamento. `kernel-tool fault-test --suite device-reset` cobre deadline com reset, memória fixada até o reset, término com pedido em andamento e falha informada pelo dispositivo. Os testes nativos `virtio_queue_test.c`, `virtio_device_test.c` e `device_inventory_test.c` cobrem a fila, a sessão e a descoberta fora do emulador.
+Os valores estão em `native/include/kernel/abi/devices.h` e em `kernel_protocol.devices.layout`. A suíte `devices` cobre descoberta e posse, negociação, validação de pedidos, pedidos de bloco, entropia, porta serial e término de um driver com pedidos em andamento. `kernel-tool fault-test --suite device-reset` cobre deadline com reset, memória fixada até o reset, término com pedido em andamento e falha informada pelo dispositivo. Os testes nativos `virtio_queue_test.c`, `virtio_device_test.c` e `device_inventory_test.c` cobrem a fila, a sessão e a descoberta fora do emulador. As suítes `network`, `network-interop` e `network-faults` usam as duas filas no `virtio-net` do QEMU, e o caso `device-reset` de `network-faults` reinicia o dispositivo com os pedidos de recepção em andamento.

@@ -28,6 +28,9 @@ Um único conjunto de códigos vale para syscalls, mensagens e modelos Python. O
 | 21 | `READ_ONLY` | A montagem ou o dispositivo não aceita mudança |
 | 22 | `CORRUPTED` | Um volume, uma imagem ou um bloco não confere com o formato ou com o checksum |
 | 23 | `UNKNOWN_OUTCOME` | Uma operação com efeito pode ter acontecido ou não: o dispositivo ou o serviço não confirmou a tempo |
+| 24 | `CONNECTION_REFUSED` | O peer recusou a conexão com um reset, ou um datagrama voltou com porta inalcançável |
+| 25 | `CONNECTION_RESET` | Uma conexão estabelecida foi encerrada por um reset do peer |
+| 26 | `UNREACHABLE` | Não há rota para o destino, o enlace está caído, o vizinho não respondeu à resolução ou o caminho informou que o destino é inalcançável |
 
 Uma syscall devolve o resultado em `a0`: valor maior ou igual a zero em caso de sucesso, ou o código negado em caso de erro. `debug_write` com ponteiro inválido devolve `-5`.
 
@@ -35,4 +38,4 @@ Em Python os mesmos valores estão em `kernel_protocol.errors.codes`. As funçõ
 
 Uma syscall que falha não deixa efeito parcial. Quem recebe `LIMIT_EXCEEDED` encontra as contas como estavam antes da chamada.
 
-Os códigos 14 a 23 vêm dos serviços de dispositivo e de arquivos; o supervisor só devolve `IO_ERROR`, em `device_open` e `device_reset`. `UNKNOWN_OUTCOME` é o único código que não diz se a operação aconteceu. Ele não autoriza repetir: quem o recebe consulta o estado, como descreve `specs/filesystem/file-service.md`.
+Os códigos 14 a 23 vêm dos serviços de dispositivo e de arquivos; o supervisor só devolve `IO_ERROR`, em `device_open` e `device_reset`. Os códigos 24 a 26 vêm do serviço de rede, descrito em `specs/network/socket-service.md`, e o supervisor nunca os devolve. `UNKNOWN_OUTCOME` é o único código que não diz se a operação aconteceu. Ele não autoriza repetir: quem o recebe consulta o estado, como descreve `specs/filesystem/file-service.md`.
