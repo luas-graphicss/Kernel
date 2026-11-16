@@ -1,0 +1,40 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "kernel"
+version = "0.1.0"
+description = "Python-first RISC-V kernel with a small freestanding native base"
+readme = "README.md"
+requires-python = ">=3.13"
+license = "GPL-3.0-only"
+license-files = ["LICENSE"]
+dependencies = []
+
+[project.scripts]
+kernel-tool = "kernel_tool.cli:main"
+
+[dependency-groups]
+dev = ["mypy>=1.13", "pytest>=8.3", "ruff>=0.8"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["host/kernel_tool"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "SIM", "C4", "PTH", "RUF"]
+
+[tool.mypy]
+strict = true
+python_version = "3.13"
+mypy_path = ["host", "src"]
+explicit_package_bases = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests/host", "tests/conformance"]
+pythonpath = ["src", "tests/conformance"]
+addopts = "-ra --strict-markers --strict-config"
