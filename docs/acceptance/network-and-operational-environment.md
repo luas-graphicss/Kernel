@@ -206,6 +206,22 @@ Uma execução completa anterior, no mesmo dia, reprovou `network-faults` no cas
 
 Depois da correção, e antes da execução registrada aqui, `network-faults` rodou 10 vezes seguidas e as suítes `network`, `network-interop`, `applications`, `supervision` e `system-journey` rodaram 3 vezes cada, sem nenhuma falha.
 
+## Falha encontrada depois desta execução
+
+O primeiro run do CI do pull request reprovou a suíte `network` no runner. Um caso falhou, `interface-and-echo`, na verificação `an echo that gets no answer ends at its deadline`: o echo para `192.0.2.1`, um endereço de fora da rede, não terminou pelo prazo. Os outros seis casos da suíte e as 16 etapas anteriores passaram, e as nove seguintes não rodaram.
+
+A diferença estava no host, e não no convidado. Um namespace de rede novo herda do host o encaminhamento IPv4. Com ele ligado, o peer deixa de descartar o pacote para fora da rede e responde com um ICMP de rede inalcançável, que encerra o echo antes do prazo. A máquina desta execução tem o encaminhamento desligado. Ligá-lo nela reproduziu a reprovação do runner, na mesma verificação.
+
+A estação agora desliga o encaminhamento no namespace antes de criar a interface, e três testes de host cobrem a mudança. As imagens do convidado são as mesmas: a correção fica só no `kernel-tool`. Depois dela rodaram, sobre as imagens desta execução:
+
+| Encaminhamento no host | O que rodou | Resultado |
+| --- | --- | --- |
+| Ligado | `network`, `network-interop`, `applications`, `system-journey` e `network-faults` | 7 de 7 cenários |
+| Desligado | `network` | 1 de 1 cenário |
+| Desligado | `ruff format --check .`, `ruff check .`, `mypy --strict host src` e `pytest tests/host tests/conformance` | Nenhuma ocorrência, e 876 testes aprovados |
+
+As tabelas das outras seções são da execução original, que tinha 873 testes.
+
 ## O que este registro não cobre
 
 - Os tempos são de um host e de TCG. Não valem para hardware físico.

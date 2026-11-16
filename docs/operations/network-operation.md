@@ -19,6 +19,8 @@ Não há DHCP nem DNS. Todo destino é um endereço IPv4 escrito em decimal, com
 
 `kernel-tool run` e as suítes ligam a interface a uma estação de teste que roda no host. A estação cria um namespace de rede só dela, com uma interface TAP no endereço `10.0.2.2`, e atende com a pilha TCP/IP do Linux. O namespace não tem rota para o host nem para a internet: o convidado alcança `10.0.2.2` e nada mais.
 
+A estação desliga o encaminhamento IPv4 dentro do namespace, que de outro modo herdaria o valor do host. O peer é uma estação e não um roteador: um pacote para um endereço de fora da rede some sem resposta, em qualquer máquina.
+
 | Porta em `10.0.2.2` | Serviço |
 | --- | --- |
 | 7, TCP e UDP | Devolve o que recebe |

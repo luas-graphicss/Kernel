@@ -18,6 +18,8 @@ INTERFACE_NAME_BYTES = 16
 LOOPBACK = "lo"
 ADDRESS_BITS = 32
 IPV6_SWITCH = Path("/proc/sys/net/ipv6/conf/all/disable_ipv6")
+FORWARDING_SWITCH = Path("/proc/sys/net/ipv4/ip_forward")
+FORWARDING_OFF = "0"
 
 
 def enter_private_network(rootless: bool) -> None:
@@ -70,9 +72,16 @@ def silence_ipv6() -> None:
         return
 
 
+def refuse_forwarding() -> None:
+    if FORWARDING_SWITCH.read_text(encoding="ascii").strip() == FORWARDING_OFF:
+        return
+    FORWARDING_SWITCH.write_text(FORWARDING_OFF, encoding="ascii")
+
+
 def build_interface(name: str, address: str, prefix: int, rootless: bool) -> int:
     enter_private_network(rootless)
     silence_ipv6()
+    refuse_forwarding()
     bring_up(LOOPBACK)
     tap = open_tap(name)
     assign_address(name, address, prefix)

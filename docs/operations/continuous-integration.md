@@ -23,6 +23,8 @@ Nenhuma etapa é opcional e nenhuma usa `continue-on-error`. Os relatórios de `
 
 As suítes `network`, `network-interop`, `network-faults`, `applications` e `system-journey` ligam o convidado a uma estação de teste que roda no host, dentro de um namespace de rede próprio, com uma interface TAP e a pilha TCP/IP do Linux. Nada sai desse namespace: ele não tem rota para o runner nem para a internet.
 
+Um namespace novo herda do host o encaminhamento IPv4, e um host que roda Docker costuma deixá-lo ligado. Com ele ligado, o peer responde com um erro ICMP a um pacote para fora da rede, e a suíte `network` espera silêncio. Por isso a estação desliga o encaminhamento no namespace antes de criar a interface, e não sobe quando não consegue.
+
 O `kernel-tool` cria o namespace de três jeitos, nesta ordem: direto, quando já roda como root; em um user namespace sem privilégio, quando o host permite e `/dev/net/tun` está acessível; com `sudo -n`, quando o sudo não pede senha. O runner `ubuntu-24.04` tem sudo sem senha, e por isso o terceiro caso está disponível mesmo quando a imagem restringe user namespaces. Se nenhum dos três funciona, a etapa termina com status 3 e a anotação `Infrastructure unavailable`.
 
 O sudo só inicia a estação. Build, QEMU e o resto do `kernel-tool` continuam com o usuário do runner. O workflow não instala pacotes para isso e não muda as permissões do job.
