@@ -57,6 +57,14 @@ static void attach_console(void)
     console_attach_uart(registers->base);
 }
 
+static void require_timebase(void)
+{
+    if (!environment.description.has_timebase) {
+        begin_rejection("timer", "missing-timebase");
+        finish_rejection();
+    }
+}
+
 static void begin_layout(void)
 {
     struct memory_range ram = environment.description.memory;
@@ -98,10 +106,10 @@ static void build_layout(void)
         reserve("firmware", description->reserved[index]);
     }
     reserve("kernel-image", linked_range(kernel_image_start, kernel_image_end));
+    reserve("stack-guard", linked_range(supervisor_stack_guard, supervisor_stack_bottom));
     reserve("supervisor-stack", linked_range(supervisor_stack_bottom, supervisor_stack_top));
     reserve("emergency-stack", linked_range(emergency_stack_bottom, emergency_stack_top));
     reserve("supervisor-heap", environment.supervisor_heap);
-    reserve("user-region", environment.user_region);
     reserve("device-tree", environment.device_tree);
     if (description->has_boot_module) {
         reserve("boot-module", description->boot_module);
@@ -143,6 +151,7 @@ const struct boot_environment *boot_environment_load(uint64_t hart, const void *
     environment.hart = hart;
     load_device_tree(device_tree_blob);
     attach_console();
+    require_timebase();
     build_layout();
     report();
     return &environment;

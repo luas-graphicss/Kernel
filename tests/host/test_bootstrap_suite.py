@@ -17,6 +17,7 @@ REQUIRED = {
     "incompatible-segment",
     "user-fault",
     "supervisor-trap",
+    "runtime-trap",
 }
 
 
@@ -56,6 +57,17 @@ def test_selftest_compares_the_corpus_within_its_own_deadline() -> None:
     assert selftest.compares_corpus
     assert selftest.deadline is Deadline.SELFTEST
     assert selftest.image is Image.SELFTEST
+
+
+def test_both_supervisor_traps_expect_the_same_report_from_different_states() -> None:
+    plain, exhausted = (
+        next(scenario for scenario in BOOTSTRAP if scenario.name == name)
+        for name in ("supervisor-trap", "runtime-trap")
+    )
+
+    assert plain.expected_lines == exhausted.expected_lines
+    assert plain.arguments != exhausted.arguments
+    assert plain.image is exhausted.image is Image.SELFTEST
 
 
 def test_selection_keeps_suite_order_and_rejects_unknown_names() -> None:

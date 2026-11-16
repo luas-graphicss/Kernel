@@ -3,6 +3,8 @@
 
 #include <stddef.h>
 
+long process_call(long first, long second, long third, long fourth, long fifth, long sixth,
+                  long number);
 long process_debug_write(const char *bytes, size_t length);
 _Noreturn void process_exit(unsigned int status);
 

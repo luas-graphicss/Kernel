@@ -2,16 +2,18 @@
 #include "kernel/arch/trap_frame.h"
 #include "kernel/arch/user_context.h"
 
-    .section .text.user_initial_status, "ax", @progbits
-    .globl user_initial_status
-    .type user_initial_status, @function
-user_initial_status:
+    .section .text.user_context_status, "ax", @progbits
+    .globl user_context_status
+    .type user_context_status, @function
+user_context_status:
     csrr a0, sstatus
-    li t0, SSTATUS_SPP | SSTATUS_SPIE | SSTATUS_FS
+    li t0, SSTATUS_SPP | SSTATUS_SPIE | SSTATUS_SIE | SSTATUS_SUM | SSTATUS_MXR | SSTATUS_FS
     not t0, t0
     and a0, a0, t0
+    li t0, SSTATUS_FS_CLEAN
+    or a0, a0, t0
     ret
-    .size user_initial_status, . - user_initial_status
+    .size user_context_status, . - user_context_status
 
     .section .text.user_context_enter, "ax", @progbits
     .globl user_context_enter
@@ -24,6 +26,13 @@ user_context_enter:
     ld t0, TRAP_FRAME_PROGRAM_COUNTER(a0)
     csrw sepc, t0
     ld t0, TRAP_FRAME_STATUS(a0)
+    csrw sstatus, t0
+    .option push
+    .option arch, +d
+    float_registers fld, a0
+    ld t1, USER_CONTEXT_FLOAT_CONTROL(a0)
+    fscsr t1
+    .option pop
     csrw sstatus, t0
     mv t6, a0
     csrw sscratch, sp

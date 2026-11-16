@@ -2,7 +2,10 @@
 #define KERNEL_MEMORY_IMAGE_H
 
 extern const char kernel_image_start[];
+extern const char kernel_rodata_start[];
+extern const char kernel_data_start[];
 extern const char kernel_image_end[];
+extern const char supervisor_stack_guard[];
 extern const char supervisor_stack_bottom[];
 extern const char supervisor_stack_top[];
 extern const char emergency_stack_bottom[];

@@ -33,6 +33,8 @@ enum variant {
     VARIANT_UNTERMINATED_ARGUMENTS,
     VARIANT_TOO_MANY_RESERVED_NODES,
     VARIANT_WIDE_ADDRESS_CELLS,
+    VARIANT_WITHOUT_TIMEBASE,
+    VARIANT_WIDE_TIMEBASE,
 };
 
 static void add_cell_counts(struct device_tree_builder *builder, uint32_t address, uint32_t size)
@@ -65,12 +67,18 @@ static void add_reserved_nodes(struct device_tree_builder *builder, uint32_t cou
     builder_end_node(builder);
 }
 
-static void add_processors(struct device_tree_builder *builder)
+static void add_processors(struct device_tree_builder *builder, enum variant variant)
 {
     const uint32_t identifier[] = {0};
+    const uint32_t timebase[] = {0, 10000000u, 0};
 
     builder_begin_node(builder, "cpus");
     add_cell_counts(builder, 1, 0);
+    if (variant == VARIANT_WIDE_TIMEBASE) {
+        builder_cells(builder, "timebase-frequency", timebase, 3);
+    } else if (variant != VARIANT_WITHOUT_TIMEBASE) {
+        builder_cells(builder, "timebase-frequency", timebase + 1, 1);
+    }
     builder_begin_node(builder, "cpu@0");
     builder_cells(builder, "reg", identifier, 1);
     builder_end_node(builder);
@@ -129,7 +137,7 @@ static size_t build_tree(enum variant variant, uint8_t *blob)
     if (variant == VARIANT_TWO_MEMORY_NODES) {
         add_memory_node(&builder, false);
     }
-    add_processors(&builder);
+    add_processors(&builder, variant);
     add_chosen(&builder, variant);
     add_devices(&builder, variant != VARIANT_WITHOUT_CONSOLE);
     builder_end_node(&builder);
@@ -174,6 +182,19 @@ static void test_reference_tree_is_described(void)
     CHECK(description.boot_module.base == 0x88200000ull);
     CHECK(description.boot_module.length == 0x1000ull);
     CHECK(description.arguments != NULL && strcmp(description.arguments, "selftest=trap") == 0);
+    CHECK(description.has_timebase && description.timebase_frequency == 10000000ull);
+}
+
+static void test_timebase_is_optional_but_must_be_well_formed(void)
+{
+    uint8_t blob[BLOB_CAPACITY];
+    struct boot_description description;
+    size_t bytes = build_tree(VARIANT_WITHOUT_TIMEBASE, blob);
+
+    CHECK(describe(blob, bytes, &description) == DEVICE_TREE_OK);
+    CHECK(!description.has_timebase);
+    bytes = build_tree(VARIANT_WIDE_TIMEBASE, blob);
+    CHECK(describe(blob, bytes, &description) == DEVICE_TREE_BAD_PROPERTY);
 }
 
 static void test_incomplete_or_ambiguous_trees_are_rejected(void)
@@ -428,6 +449,7 @@ static void test_mutated_trees_never_escape_their_buffer(void)
 int main(void)
 {
     test_reference_tree_is_described();
+    test_timebase_is_optional_but_must_be_well_formed();
     test_incomplete_or_ambiguous_trees_are_rejected();
     test_header_fields_are_validated();
     test_structure_is_validated();

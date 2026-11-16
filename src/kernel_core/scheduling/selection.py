@@ -13,15 +13,19 @@ PRIORITY_LEVELS = 4
 HIGHEST_PRIORITY = 0
 LOWEST_PRIORITY = PRIORITY_LEVELS - 1
 AGING_THRESHOLD = 8
+DONATION_DEPTH = 8
 NO_PROCESS = 0
 
 
 class ScheduledProcess:
     def __init__(self, priority: int) -> None:
         self.base_priority = priority
+        self.entitled_priority = priority
         self.effective_priority = priority
         self.state = NEW
         self.waited = 0
+        self.waiting_on = NO_PROCESS
+        self.donors: list[int] = []
 
 
 class Scheduler:
@@ -32,6 +36,9 @@ class Scheduler:
 
     def processes(self) -> list[int]:
         return sorted(self._processes)
+
+    def knows(self, handle: int) -> bool:
+        return handle in self._processes
 
     def process(self, handle: int) -> ScheduledProcess:
         if handle not in self._processes:
@@ -55,13 +62,29 @@ class Scheduler:
         if process.state == RUNNING:
             raise KernelError(BAD_STATE, "a running process becomes ready only by selection")
         check_transition(process.state, READY)
+        self._stop_donating(handle, process)
         self._enqueue(handle, process)
 
     def block(self, handle: int) -> None:
         process = self.process(handle)
         check_transition(process.state, BLOCKED)
         process.state = BLOCKED
+        process.effective_priority = process.entitled_priority
         self.running = NO_PROCESS
+
+    def donate(self, handle: int, target: int) -> None:
+        process = self.process(handle)
+        if process.state != BLOCKED:
+            raise KernelError(BAD_STATE, "only a blocked process donates its priority")
+        if target == handle or target not in self._processes:
+            raise KernelError(INVALID_HANDLE, "donation target is not another known process")
+        if self._processes[target].state == DYING:
+            raise KernelError(INVALID_HANDLE, "donation target is already dying")
+        if process.waiting_on != NO_PROCESS:
+            raise KernelError(BAD_STATE, "process already donates its priority")
+        process.waiting_on = target
+        self._processes[target].donors.append(handle)
+        self._propagate(target)
 
     def exit(self, handle: int) -> None:
         process = self.process(handle)
@@ -70,6 +93,10 @@ class Scheduler:
             self._queues[process.effective_priority].remove(handle)
         if self.running == handle:
             self.running = NO_PROCESS
+        self._stop_donating(handle, process)
+        for donor in process.donors:
+            self._processes[donor].waiting_on = NO_PROCESS
+        process.donors = []
         process.state = DYING
 
     def reap(self, handle: int) -> None:
@@ -87,16 +114,54 @@ class Scheduler:
         self._age_waiting()
         process = self._processes[chosen]
         process.state = RUNNING
-        process.effective_priority = process.base_priority
+        process.effective_priority = process.entitled_priority
         process.waited = 0
         self.running = chosen
         return chosen
 
+    def _entitlement(self, process: ScheduledProcess) -> int:
+        priority = process.base_priority
+        for donor in process.donors:
+            donated = self._processes[donor].effective_priority
+            if donated < priority:
+                priority = donated
+        return priority
+
+    def _stop_donating(self, handle: int, process: ScheduledProcess) -> None:
+        target = process.waiting_on
+        if target == NO_PROCESS:
+            return
+        process.waiting_on = NO_PROCESS
+        self._processes[target].donors.remove(handle)
+        self._propagate(target)
+
+    def _propagate(self, handle: int) -> None:
+        for _ in range(DONATION_DEPTH):
+            process = self._processes[handle]
+            entitled = self._entitlement(process)
+            if entitled == process.entitled_priority:
+                return
+            process.entitled_priority = entitled
+            if process.state != READY:
+                process.effective_priority = entitled
+            elif entitled < process.effective_priority:
+                self._promote(handle, process, entitled)
+            handle = process.waiting_on
+            if handle == NO_PROCESS:
+                return
+
+    def _promote(self, handle: int, process: ScheduledProcess, priority: int) -> None:
+        self._queues[process.effective_priority].remove(handle)
+        process.effective_priority = priority
+        process.waited = 0
+        self._queues[priority].append(handle)
+
     def _enqueue(self, handle: int, process: ScheduledProcess) -> None:
         process.state = READY
-        process.effective_priority = process.base_priority
+        process.entitled_priority = self._entitlement(process)
+        process.effective_priority = process.entitled_priority
         process.waited = 0
-        self._queues[process.base_priority].append(handle)
+        self._queues[process.effective_priority].append(handle)
 
     def _dequeue_highest(self) -> int:
         for queue in self._queues:

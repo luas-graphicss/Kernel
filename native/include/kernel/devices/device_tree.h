@@ -47,6 +47,8 @@ struct boot_description {
     bool has_boot_module;
     struct memory_range boot_module;
     const char *arguments;
+    bool has_timebase;
+    uint64_t timebase_frequency;
 };
 
 enum device_tree_status device_tree_open(const void *blob, size_t limit, struct device_tree *tree);

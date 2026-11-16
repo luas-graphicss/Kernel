@@ -7,13 +7,22 @@ from kernel_tool.outcome import CheckError, InfrastructureError
 from kernel_tool.workspace import Workspace
 
 HOSTED_SOURCES = (
+    "native/supervisor/capabilities/capability_space.c",
     "native/supervisor/devices/device_tree/boot_description.c",
     "native/supervisor/devices/device_tree/container.c",
     "native/supervisor/devices/device_tree/tokens.c",
+    "native/supervisor/events/event_queue.c",
+    "native/supervisor/ipc/message.c",
+    "native/supervisor/memory/address_space.c",
+    "native/supervisor/memory/frame_pool.c",
     "native/supervisor/memory/layout.c",
+    "native/supervisor/memory/page_table.c",
     "native/supervisor/memory/range.c",
-    "native/supervisor/processes/syscall.c",
+    "native/supervisor/objects/object_table.c",
+    "native/supervisor/objects/slot_table.c",
+    "native/supervisor/processes/spawn_request.c",
     "native/supervisor/processes/user_image.c",
+    "native/supervisor/timers/clock.c",
 )
 INCLUDE_DIRECTORIES = ("native/include", "tests/native/support")
 TEST_DIRECTORY = Path("tests") / "native"
@@ -66,19 +75,20 @@ def run_hosted_tests(workspace: Workspace) -> list[str]:
 
 def _require_sanitizers(compiler: str, output_dir: Path) -> None:
     probe = output_dir / "sanitizer_probe.c"
+    binary = output_dir / "sanitizer_probe"
     probe.write_text(PROBE_SOURCE, encoding="ascii")
-    completed = subprocess.run(
-        [compiler, *SANITIZER_FLAGS, str(probe), "-o", str(output_dir / "sanitizer_probe")],
-        capture_output=True,
-        text=True,
-        timeout=COMPILE_TIMEOUT_SECONDS,
-        check=False,
-    )
-    if completed.returncode != 0:
-        raise InfrastructureError(
-            "the host compiler cannot link AddressSanitizer and UndefinedBehaviorSanitizer:\n"
-            f"{completed.stderr.strip()}"
+    for command, action in (
+        ([compiler, *SANITIZER_FLAGS, str(probe), "-o", str(binary)], "link"),
+        ([str(binary)], "run a program built with"),
+    ):
+        completed = subprocess.run(
+            command, capture_output=True, text=True, timeout=COMPILE_TIMEOUT_SECONDS, check=False
         )
+        if completed.returncode != 0:
+            raise InfrastructureError(
+                f"the host cannot {action} AddressSanitizer and UndefinedBehaviorSanitizer:\n"
+                f"{completed.stderr.strip()}"
+            )
 
 
 def _compile(compiler: str, root: Path, sources: list[Path], binary: Path) -> None:

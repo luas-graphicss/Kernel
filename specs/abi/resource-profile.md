@@ -24,8 +24,8 @@ Endereços e tamanhos em bytes.
 | Campo | Significado |
 | --- | --- |
 | `kernel_base` | Endereço de linkagem do kernel |
-| `user_region_base` | Base da região do processo de usuário |
-| `user_region_bytes` | Tamanho dessa região |
+| `user_region_base` | Endereço virtual em que começa a imagem de todo processo |
+| `user_region_bytes` | Tamanho da faixa virtual que imagem, heap, página de guarda e stack de um processo podem ocupar |
 | `supervisor_stack_bytes` | Stack do supervisor |
 | `emergency_stack_bytes` | Stack usada só pelo relatório de trap fatal |
 | `user_heap_bytes` | Heap do runtime da imagem de usuário |
@@ -55,3 +55,5 @@ As cotas se acumulam sobre todos os recursos do mesmo processo. Dividir um pedid
 | Campo | Significado |
 | --- | --- |
 | `boot_seconds` | Tempo máximo de um cenário de boot no host antes de ser contado como falha |
+| `selftest_seconds` | Tempo máximo do autoteste do runtime |
+| `soak_seconds` | Tempo máximo do cenário de 10.000 ciclos de processo e IPC |

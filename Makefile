@@ -30,7 +30,7 @@ link_kernel = $(CROSS_COMPILE)ld $(KERNEL_LINK_FLAGS) -Map=$@.map -o $@ $(1) $(K
 include tests/guest/guest.mk
 
 .PHONY: all analyze
-all: $(KERNEL) $(INIT_IMAGE) $(SELFTEST_KERNEL) $(FAULT_IMAGE)
+all: $(KERNEL) $(INIT_IMAGE) $(SELFTEST_KERNEL) $(FAULT_IMAGE) $(TESTS_IMAGE)
 
 analyze: $(NATIVE_ANALYSIS)
 

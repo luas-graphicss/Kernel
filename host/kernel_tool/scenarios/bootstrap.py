@@ -14,14 +14,18 @@ BOOT = Scenario(
         r"^boot: hart=0 device-tree=0x[0-9a-f]{16} device-tree-bytes=\d+ device-tree-limit=65536$",
         r"^boot: region=boot-module base=0x[0-9a-f]{16} bytes=0x[0-9a-f]{16}$",
         r"^boot: console=ns16550a registers=0x[0-9a-f]{16}$",
+        r"^boot: frames=\d+ reserved-frames=\d+$",
+        r"^boot: timebase-hz=\d+$",
         r"^policy: profile=ok memory-bytes=268435456 processes=16 ",
-        r"^policy: admitted=init handle=\d+ memory-bytes=\d+ heap-bytes=\d+ stack-bytes=\d+$",
+        r"^policy: admitted=init program=kernel_services\.init\.main handle=\d+ priority=1$",
         r"^init: runtime=micropython privilege=user$",
-        r"^init: allocated-bytes=\d+ checksum=(\d+) expected=\1$",
-        r"^user: exit status=0$",
+        r"^init: service=kernel_services\.echo\.main ready$",
+        r"^init: service=kernel_services\.echo\.main echo=ok$",
+        r"^init: service=kernel_services\.echo\.main exit=0$",
         r"^policy: reaped=init reason=exit value=0 live=0 memory-in-use=0$",
+        r"^policy: resources=released$",
     ),
-    forbidden_lines=(r"^trap: ", r"^panic: ", r"^Traceback "),
+    forbidden_lines=(r"^trap: ", r"^panic: ", r"^Traceback ", r"^user: fault "),
     repeats=3,
 )
 
@@ -81,11 +85,8 @@ INCOMPATIBLE_SEGMENT = Scenario(
     image=Image.KERNEL,
     boot_module=BootModule.MISPLACED_SEGMENT,
     expected_status=KernelStatus.FAILED,
-    expected_lines=(
-        r"^policy: profile=ok ",
-        r"^policy: rejected=boot-module reason=segment-outside-region$",
-    ),
-    forbidden_lines=USER_OUTPUT,
+    expected_lines=(r"^policy: rejected=boot-module reason=segment-outside-region$",),
+    forbidden_lines=(r"^policy: admitted=", *USER_OUTPUT),
 )
 
 USER_FAULT = Scenario(
@@ -114,6 +115,16 @@ SUPERVISOR_TRAP = Scenario(
     arguments="probe=supervisor-trap",
 )
 
+RUNTIME_TRAP = Scenario(
+    name="runtime-trap",
+    image=Image.SELFTEST,
+    boot_module=BootModule.NONE,
+    expected_status=KernelStatus.FAILED,
+    expected_lines=SUPERVISOR_TRAP.expected_lines,
+    forbidden_lines=(r"^selftest: ", r"^Traceback "),
+    arguments="probe=runtime-trap",
+)
+
 BOOTSTRAP = (
     BOOT,
     RUNTIME_SELFTEST,
@@ -123,4 +134,5 @@ BOOTSTRAP = (
     INCOMPATIBLE_SEGMENT,
     USER_FAULT,
     SUPERVISOR_TRAP,
+    RUNTIME_TRAP,
 )

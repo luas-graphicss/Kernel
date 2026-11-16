@@ -14,11 +14,15 @@
 #define REGISTER_SYSCALL_NUMBER 17
 
 #define TRAP_CAUSE_USER_ENVIRONMENT_CALL 8
+#define TRAP_CAUSE_SUPERVISOR_TIMER 5
 
 #ifndef __ASSEMBLER__
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+
+#define TRAP_CAUSE_INTERRUPT (1ull << 63)
 
 struct trap_frame {
     uint64_t registers[TRAP_FRAME_REGISTERS];
@@ -35,6 +39,16 @@ _Static_assert(offsetof(struct trap_frame, status) == TRAP_FRAME_STATUS,
 _Static_assert(offsetof(struct trap_frame, cause) == TRAP_FRAME_CAUSE, "assembly offset of cause");
 _Static_assert(offsetof(struct trap_frame, value) == TRAP_FRAME_VALUE, "assembly offset of value");
 _Static_assert(sizeof(struct trap_frame) == TRAP_FRAME_BYTES, "assembly size of the trap frame");
+
+static inline bool trap_is_interrupt(uint64_t cause)
+{
+    return (cause & TRAP_CAUSE_INTERRUPT) != 0;
+}
+
+static inline uint64_t trap_interrupt_number(uint64_t cause)
+{
+    return cause & ~TRAP_CAUSE_INTERRUPT;
+}
 
 const char *trap_cause_name(uint64_t cause);
 void trap_report(const char *mode, const struct trap_frame *frame);

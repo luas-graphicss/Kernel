@@ -64,6 +64,21 @@ jobs:
       - name: Boot the bootstrap scenarios
         run: sh .github/scripts/classify-exit.sh uv run kernel-tool test --profile qemu-riscv64 --suite bootstrap
 
+      - name: Run the memory isolation programs
+        run: sh .github/scripts/classify-exit.sh uv run kernel-tool test --profile qemu-riscv64 --suite memory
+
+      - name: Run the process lifecycle programs
+        run: sh .github/scripts/classify-exit.sh uv run kernel-tool test --profile qemu-riscv64 --suite processes
+
+      - name: Run the capability programs
+        run: sh .github/scripts/classify-exit.sh uv run kernel-tool test --profile qemu-riscv64 --suite capabilities
+
+      - name: Run the message passing programs
+        run: sh .github/scripts/classify-exit.sh uv run kernel-tool test --profile qemu-riscv64 --suite ipc
+
+      - name: Run the scheduling programs
+        run: sh .github/scripts/classify-exit.sh uv run kernel-tool test --profile qemu-riscv64 --suite scheduling
+
       - name: Verify and reproduce the images
         run: sh .github/scripts/classify-exit.sh uv run kernel-tool verify-artifacts --profile qemu-riscv64 --reproduce
 

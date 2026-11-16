@@ -44,9 +44,23 @@ def check_invariants(scheduler: Scheduler, waiting: dict[int, int]) -> None:
         require(waiting[handle] <= STARVATION_BOUND, "a ready process is selected within the bound")
 
 
-def apply(digest: Digest, operation, handle: int) -> bool:
+def check_donations(scheduler: Scheduler) -> None:
+    for handle in scheduler.processes():
+        process = scheduler.process(handle)
+        require(process.entitled_priority <= process.base_priority, "donation only promotes")
+        require(
+            process.effective_priority <= process.entitled_priority,
+            "a process never runs below its entitlement",
+        )
+        for donor in process.donors:
+            waiter = scheduler.process(donor)
+            require(waiter.state == BLOCKED, "only a blocked process donates")
+            require(waiter.waiting_on == handle, "a donor waits on the process that lists it")
+
+
+def apply(digest: Digest, operation, *handles: int) -> bool:
     try:
-        operation(handle)
+        operation(*handles)
     except KernelError as error:
         digest.add(error.code)
         return False
@@ -74,13 +88,17 @@ def run(seed: int, transitions: int) -> str:
                 handle = generator.pick(candidates)
                 if apply(digest, scheduler.make_ready, handle):
                     waiting[handle] = 0
-        elif choice < 75:
+        elif choice < 68:
             chosen = scheduler.select()
             digest.add(chosen)
             for handle in in_state(scheduler, READY):
                 waiting[handle] = waiting.get(handle, 0) + 1
             if chosen != NO_PROCESS:
                 waiting[chosen] = 0
+        elif choice < 75:
+            waiters = in_state(scheduler, BLOCKED)
+            if waiters and len(known) > 1:
+                apply(digest, scheduler.donate, generator.pick(waiters), generator.pick(known))
         elif choice < 85:
             if scheduler.running != NO_PROCESS:
                 apply(digest, scheduler.block, scheduler.running)
@@ -93,6 +111,7 @@ def run(seed: int, transitions: int) -> str:
         else:
             apply(digest, scheduler.make_ready, generator.next())
         check_invariants(scheduler, waiting)
+        check_donations(scheduler)
 
     digest.add(len(in_state(scheduler, DYING)))
     digest.add(identities.live)

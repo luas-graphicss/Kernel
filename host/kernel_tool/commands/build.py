@@ -21,6 +21,16 @@ def register(commands: CommandRegistry) -> None:
         help="run the hosted native tests under sanitizers and the static analyzer",
     )
     add_profile_option(native_check)
+    native_check.add_argument(
+        "--sanitizers",
+        action="store_true",
+        help="run only the hosted native tests under AddressSanitizer and UBSan",
+    )
+    native_check.add_argument(
+        "--analyzer",
+        action="store_true",
+        help="run only the static analyzer over the freestanding sources",
+    )
     native_check.set_defaults(handler=run_native_check)
 
     build = commands.add_parser("build", help="build the kernel image with the pinned toolchain")
@@ -29,11 +39,20 @@ def register(commands: CommandRegistry) -> None:
 
 
 def run_native_check(workspace: Workspace, options: argparse.Namespace) -> ExitCode:
-    suites = run_hosted_tests(workspace)
-    run_make(
-        workspace, selected_profile(workspace, options), load_toolchain(workspace), ANALYSIS_GOAL
-    )
-    logger.info("native check passed: %s and static analysis", ", ".join(suites))
+    sanitizers: bool = options.sanitizers
+    analyzer: bool = options.analyzer
+    every_stage = not (sanitizers or analyzer)
+    if sanitizers or every_stage:
+        suites = run_hosted_tests(workspace)
+        logger.info("hosted native tests passed under sanitizers: %s", ", ".join(suites))
+    if analyzer or every_stage:
+        run_make(
+            workspace,
+            selected_profile(workspace, options),
+            load_toolchain(workspace),
+            ANALYSIS_GOAL,
+        )
+        logger.info("static analysis passed")
     return ExitCode.OK
 
 

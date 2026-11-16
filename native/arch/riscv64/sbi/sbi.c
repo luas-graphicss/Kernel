@@ -4,8 +4,10 @@
 
 #define EXTENSION_DEBUG_CONSOLE 0x4442434eul
 #define EXTENSION_SYSTEM_RESET 0x53525354ul
+#define EXTENSION_TIMER 0x54494d45ul
 #define FUNCTION_CONSOLE_WRITE 0ul
 #define FUNCTION_SYSTEM_RESET 0ul
+#define FUNCTION_TIMER_SET 0ul
 #define RESET_TYPE_SHUTDOWN 0ul
 #define RESET_REASON_NONE 0ul
 
@@ -17,6 +19,11 @@ size_t sbi_console_write(const char *bytes, size_t length)
         return 0;
     }
     return (size_t)result.value;
+}
+
+void sbi_timer_set(uint64_t deadline)
+{
+    sbi_call(EXTENSION_TIMER, FUNCTION_TIMER_SET, deadline, 0, 0);
 }
 
 _Noreturn void sbi_shutdown(void)

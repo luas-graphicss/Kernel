@@ -23,14 +23,30 @@ class BuildOutputs:
     init_program: Path
     init_image: Path
     fault_image: Path
+    tests_program: Path
+    tests_image: Path
 
     @property
     def artifacts(self) -> tuple[Path, ...]:
-        return (self.kernel, self.selftest_kernel, self.init_image, self.fault_image)
+        return (
+            self.kernel,
+            self.selftest_kernel,
+            self.init_image,
+            self.fault_image,
+            self.tests_image,
+        )
 
     @property
     def executables(self) -> tuple[Path, ...]:
-        return (self.kernel, self.selftest_kernel, self.init_program)
+        return (self.kernel, self.selftest_kernel, self.init_program, self.tests_program)
+
+    @property
+    def user_programs(self) -> tuple[Path, ...]:
+        return (self.init_program, self.tests_program)
+
+    @property
+    def user_images(self) -> tuple[Path, ...]:
+        return (self.init_image, self.fault_image, self.tests_image)
 
 
 def link_map(executable: Path) -> Path:
@@ -48,6 +64,8 @@ def build_outputs(
         init_program=root / "user" / "init.elf",
         init_image=root / "init.img",
         fault_image=root / "fault.img",
+        tests_program=root / "user" / "tests.elf",
+        tests_image=root / "tests.img",
     )
 
 
@@ -129,6 +147,6 @@ def build_image(
 
 
 def require_artifacts(outputs: BuildOutputs) -> None:
-    for artifact in (*outputs.artifacts, outputs.init_program):
+    for artifact in (*outputs.artifacts, *outputs.user_programs):
         if not artifact.is_file():
             raise CheckError(f"{artifact} does not exist; run kernel-tool build first")

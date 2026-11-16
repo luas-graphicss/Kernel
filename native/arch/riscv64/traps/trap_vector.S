@@ -56,6 +56,14 @@ user_trap:
     csrrw t0, sscratch, zero
     sd t0, (REGISTER_STACK_POINTER * 8)(t6)
     save_trap_state t6
+    .option push
+    .option arch, +d
+    float_registers fsd, t6
+    frcsr t0
+    sd t0, USER_CONTEXT_FLOAT_CONTROL(t6)
+    .option pop
+    li t0, SSTATUS_FS
+    csrc sstatus, t0
     ld ra, KERNEL_CONTEXT_RETURN_ADDRESS(sp)
     kernel_saved_registers ld
     addi sp, sp, KERNEL_CONTEXT_BYTES

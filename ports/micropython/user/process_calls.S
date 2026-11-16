@@ -1,5 +1,14 @@
 #include "kernel/abi/syscalls.h"
 
+    .section .text.process_call, "ax", @progbits
+    .globl process_call
+    .type process_call, @function
+process_call:
+    mv a7, a6
+    ecall
+    ret
+    .size process_call, . - process_call
+
     .section .text.process_debug_write, "ax", @progbits
     .globl process_debug_write
     .type process_debug_write, @function

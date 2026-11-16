@@ -1,12 +1,5 @@
 import pytest
 
-from kernel_services.init.main import (
-    ALLOCATION_ROUNDS,
-    BLOCK_BYTES,
-    EXPECTED_CHECKSUM,
-    churn_heap,
-)
-from kernel_services.init.main import main as init_main
 from runtime_selftest import bytes_case, exceptions_case, integers_case
 from runtime_selftest.checks import CheckError, Checks
 
@@ -15,21 +8,6 @@ LANGUAGE_CASES = (
     ("bytes", bytes_case.run, 13),
     ("exceptions", exceptions_case.run, 12),
 )
-
-
-def test_init_checksum_matches_the_value_frozen_in_the_image() -> None:
-    assert churn_heap(ALLOCATION_ROUNDS) == EXPECTED_CHECKSUM
-    assert churn_heap(ALLOCATION_ROUNDS - 1) != EXPECTED_CHECKSUM
-
-
-def test_init_reports_success_and_what_it_allocated(capsys: pytest.CaptureFixture[str]) -> None:
-    assert init_main() is True
-
-    assert capsys.readouterr().out.splitlines() == [
-        "init: runtime=micropython privilege=user",
-        f"init: allocated-bytes={ALLOCATION_ROUNDS * BLOCK_BYTES} "
-        f"checksum={EXPECTED_CHECKSUM} expected={EXPECTED_CHECKSUM}",
-    ]
 
 
 @pytest.mark.parametrize(

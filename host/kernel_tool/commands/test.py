@@ -11,12 +11,13 @@ from kernel_tool.commands.options import (
 )
 from kernel_tool.outcome import CheckError, ExitCode
 from kernel_tool.scenarios.bootstrap import BOOTSTRAP
+from kernel_tool.scenarios.guest_suites import GUEST_SUITES
 from kernel_tool.scenarios.model import Scenario
 from kernel_tool.scenarios.report import format_result, suite_document, write_document
 from kernel_tool.scenarios.runner import SuiteContext, run_scenario
 from kernel_tool.workspace import Workspace
 
-SUITES: dict[str, tuple[Scenario, ...]] = {"bootstrap": BOOTSTRAP}
+SUITES: dict[str, tuple[Scenario, ...]] = {"bootstrap": BOOTSTRAP, **GUEST_SUITES}
 
 logger = logging.getLogger(__name__)
 

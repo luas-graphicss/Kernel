@@ -1,0 +1,26 @@
+#ifndef KERNEL_ABI_RIGHTS_H
+#define KERNEL_ABI_RIGHTS_H
+
+#define RIGHT_SEND 0x01u
+#define RIGHT_RECEIVE 0x02u
+#define RIGHT_READ 0x04u
+#define RIGHT_WRITE 0x08u
+#define RIGHT_MAP 0x10u
+#define RIGHT_DELEGATE 0x20u
+#define RIGHT_ADMIN 0x40u
+#define RIGHTS_ALL 0x7fu
+
+#define OBJECT_NONE 0u
+#define OBJECT_SYSTEM 1u
+#define OBJECT_PROCESS 2u
+#define OBJECT_ENDPOINT 3u
+#define OBJECT_BUFFER 4u
+#define OBJECT_REPLY 5u
+
+#define CAPABILITY_MAX_DEPTH 16u
+
+#define INSPECT_KIND_MASK 0xffu
+#define INSPECT_RIGHTS_SHIFT 8u
+#define INSPECT_DEPTH_SHIFT 16u
+
+#endif

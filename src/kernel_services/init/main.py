@@ -1,30 +1,66 @@
-ALLOCATION_ROUNDS = 4096
-BLOCK_BYTES = 1024
-RETAINED_BLOCKS = 16
-BYTE_MASK = 0xFF
-CHECKSUM_MASK = 0xFFFFFFFF
-CHECKSUM_MULTIPLIER = 31
-EXPECTED_CHECKSUM = 4258764792
+from kernel_client import capabilities, ipc, processes
+from kernel_protocol.processes.status import WAIT_REASON_EXIT
+from kernel_protocol.wire.message import Message
+from kernel_services.echo.protocol import OPERATION_ECHO, OPERATION_REGISTER, OPERATION_STOP
+from kernel_services.init.manifest import KNOWN_GRANTS, REGISTRATION, SERVICES, Service
+
+NO_FLAGS = 0
+PROBE_PAYLOAD = b"kernel"
+PROBE_CORRELATION = 0x4B524E4C
 
 
-def churn_heap(rounds: int) -> int:
-    retained: list[bytearray] = []
-    checksum = 0
-    for index in range(rounds):
-        block = bytearray(BLOCK_BYTES)
-        block[index % BLOCK_BYTES] = index & BYTE_MASK
-        retained.append(block)
-        if len(retained) > RETAINED_BLOCKS:
-            oldest = retained.pop(0)
-            checksum = (checksum * CHECKSUM_MULTIPLIER + sum(oldest)) & CHECKSUM_MASK
-    return checksum
+class Running:
+    def __init__(self, service: Service, process: int, endpoint: int) -> None:
+        self.service = service
+        self.process = process
+        self.endpoint = endpoint
+
+
+def start(system: int, registration: int, service: Service) -> Running:
+    available = {REGISTRATION: registration}
+    grants = tuple((available[name], KNOWN_GRANTS[name]) for name in service.grants)
+    process = processes.spawn(
+        system,
+        service.program,
+        priority=service.priority,
+        heap_bytes=service.heap_bytes,
+        grants=grants,
+    )
+    announced = ipc.receive(registration)
+    if announced.message.operation != OPERATION_REGISTER or announced.transferred == 0:
+        return Running(service, process, 0)
+    print(f"init: service={service.program} ready")
+    return Running(service, process, announced.transferred)
+
+
+def probe(running: Running) -> bool:
+    if running.endpoint == 0:
+        return False
+    request = Message(OPERATION_ECHO, NO_FLAGS, PROBE_CORRELATION, PROBE_PAYLOAD)
+    response, _received = ipc.call(running.endpoint, request)
+    return response.payload == PROBE_PAYLOAD and response.correlation == PROBE_CORRELATION
+
+
+def stop(running: Running) -> bool:
+    if running.endpoint != 0:
+        ipc.call(running.endpoint, Message(OPERATION_STOP, NO_FLAGS, PROBE_CORRELATION, b""))
+        capabilities.close(running.endpoint)
+    reason, value = processes.wait(running.process)
+    capabilities.close(running.process)
+    print(f"init: service={running.service.program} exit={value}")
+    return reason == WAIT_REASON_EXIT and value == 0
 
 
 def main() -> bool:
+    system = processes.Startup().handles[0]
     print("init: runtime=micropython privilege=user")
-    checksum = churn_heap(ALLOCATION_ROUNDS)
-    print(
-        f"init: allocated-bytes={ALLOCATION_ROUNDS * BLOCK_BYTES} "
-        f"checksum={checksum} expected={EXPECTED_CHECKSUM}"
-    )
-    return checksum == EXPECTED_CHECKSUM
+    registration = ipc.create_endpoint()
+    succeeded = True
+    for service in SERVICES:
+        running = start(system, registration, service)
+        answered = probe(running)
+        verdict = "ok" if answered else "failed"
+        print(f"init: service={service.program} echo={verdict}")
+        succeeded = stop(running) and answered and succeeded
+    capabilities.close(registration)
+    return succeeded
