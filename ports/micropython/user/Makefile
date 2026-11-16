@@ -1,6 +1,8 @@
 PROFILE_SOURCES := \
 	bindings/buffers.c \
 	bindings/calls.c \
+	bindings/checksum.c \
+	bindings/devices.c \
 	bindings/messages.c \
 	bindings/module.c \
 	main.c \

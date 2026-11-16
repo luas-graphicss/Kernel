@@ -26,6 +26,8 @@ static bool takes_only_scalars(long number)
     case SYSCALL_PROCESS_WAIT:
     case SYSCALL_PROCESS_KILL:
     case SYSCALL_PROCESS_INTERRUPT:
+    case SYSCALL_DEVICE_CLAIM:
+    case SYSCALL_DEVICE_RESET:
         return true;
     default:
         return false;
