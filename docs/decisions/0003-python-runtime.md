@@ -17,11 +17,13 @@ Há dois perfis do mesmo source lock, sem fork do interpretador:
 
 Nos dois perfis:
 
-- Só módulos congelados em bytecode no build. O compilador, o REPL e a importação externa ficam desligados.
+- Só módulos congelados em bytecode no build. O compilador e o REPL ficam desligados, e `eval`, `exec`, `compile`, `open` e `input` não existem.
+- `MICROPY_ENABLE_EXTERNAL_IMPORT` fica ligado porque é esse caminho de importação que resolve módulos e pacotes congelados. Nada de fora da imagem é carregado: `mp_import_stat` responde que nenhum caminho existe, `MICROPY_PERSISTENT_CODE_LOAD` fica desligado e `sys.path` contém só `.frozen`.
 - A configuração parte de `MICROPY_CONFIG_ROM_LEVEL_MINIMUM` e habilita recurso por recurso em `ports/micropython/shared/mpconfigshared.h`.
 - Inteiros longos usam MPZ. Ponto flutuante fica desligado.
 - NLR usa a implementação nativa `py/nlrrv64.c`.
-- A coleta lê `s0` a `s11` com `shared/runtime/gchelper_rv64i.s` e varre a stack até o topo registrado.
+- A coleta usa `gc_helper_collect_regs_and_stack`, de `shared/runtime/gchelper_native.c`: lê `s0` a `s11` com `shared/runtime/gchelper_rv64i.s` e varre a stack até o topo registrado. Finalizadores ficam desligados.
+- A checagem de stack do interpretador fica ligada, com margem de 2048 bytes. Recursão sem fim termina em `RuntimeError` e a stack continua utilizável.
 - Exceção não tratada no supervisor imprime o traceback e encerra o boot com falha.
 
 Nenhuma libc hospedada entra no link. As funções de memória e string vêm de `shared/libc/string0.c` do próprio MicroPython, e `libgcc` é a única biblioteca do compilador. `kernel-tool verify-artifacts` falha se o mapa de linkagem mostrar outra origem.
