@@ -21,7 +21,11 @@ Cada classe de falha tem um comportamento definido:
 | Exceção não tratada em aplicação | Encerrar o processo, devolver status e liberar recursos |
 | OOM em processo | Rejeitar a alocação ou encerrar o processo, sem consumir a reserva do supervisor |
 | Morte de serviço | Invalidar endpoints antigos, concluir esperas e reiniciar só conforme o manifesto |
-| Dispositivo sem resposta | Deadline, tentativa limitada de reset e estado degradado |
+| Dispositivo sem resposta | Deadline, uma tentativa de reset e, se ela falha, quarentena do dispositivo |
+| Dispositivo que viola o protocolo | Parado pelo supervisor, com a memória dos pedidos ainda fixada, até um reset |
+| Erro de escrita ou de flush em um commit | `IO_ERROR` se o root não chegou a ser enviado, `UNKNOWN_OUTCOME` se chegou; o volume recusa tudo até ser montado de novo |
+| Volume corrompido, truncado ou de formato desconhecido | Montagem somente leitura ou indisponível, com o motivo; nunca formatação |
+| Reinício do serviço de arquivos | Recuperação normal do volume; sessões e handles antigos recusados; nenhum pedido reexecutado |
 | Flood de logs ou eventos | Limitação e descarte contabilizado, preservando a reserva crítica |
 
 O caminho de panic não usa heap Python, não depende de serviço em U-mode e escreve pela UART de emergência. Uma segunda trap durante o diagnóstico desliga sem imprimir de novo.
@@ -36,9 +40,11 @@ Todo boot termina com uma linha `kernel: status=ok` ou `kernel: status=failed`, 
 
 Um teste só passa quando a linha de status, as asserções do cenário e o código de saída do emulador concordam. Boot que estoura o deadline é falha, não teste ignorado.
 
-As oito primeiras linhas da tabela estão implementadas e têm cenário ou caso de suíte. Da morte de serviço existem o fechamento dos endpoints e a conclusão das esperas; o reinício pelo manifesto ainda não. Do flood existe a fila de eventos limitada, com descarte contabilizado. A linha de dispositivos depende dos drivers.
+Todas as linhas têm cenário ou caso de suíte, com duas ressalvas. Da morte de serviço existem o fechamento dos endpoints, a conclusão das esperas e o reinício dos serviços de arquivos e de blocos quando o `init` o pede; uma política de reinício automático, com quantidade e janela no manifesto, ainda não existe. Do flood existem a fila de eventos limitada e a entrada serial limitada, as duas com descarte contabilizado.
+
+Um cliente distingue erro definitivo de resultado desconhecido pelo código: `UNKNOWN_OUTCOME` só aparece quando uma operação com efeito pode ter acontecido. Nenhuma camada repete sozinha uma operação com efeito.
 
 ## Hipóteses a confirmar
 
-- Quarentena de frames de DMA após falha de reset não esgota a memória em sequências longas de falha.
+- Quarentena de frames de DMA após falha de reset não esgota a memória em sequências longas de falha. Os frames em quarentena só voltam no boot seguinte.
 - A política de restart do manifesto, com quantidade e janela, evita restart loop sem mascarar defeito permanente.

@@ -10,8 +10,10 @@ O workflow `.github/workflows/ci.yml` roda em cada pull request e em cada push p
 4. `kernel-tool native-check`
 5. `kernel-tool build`
 6. `kernel-tool test --suite bootstrap`
-7. `kernel-tool test` com as suítes `memory`, `processes`, `capabilities`, `ipc` e `scheduling`, uma etapa para cada
-8. `kernel-tool verify-artifacts --reproduce`
+7. `kernel-tool test` com as suítes `memory`, `processes`, `capabilities`, `ipc`, `scheduling`, `devices`, `vfs` e `storage`, uma etapa para cada
+8. `kernel-tool fault-test` com as suítes `device-reset` e `storage-crash`, uma etapa para cada. A segunda roda as 1.000 sequências padrão, a partir da seed 1
+9. `kernel-tool verify-filesystem --corpus tests/faults/storage`
+10. `kernel-tool verify-artifacts --reproduce`
 
 Nenhuma etapa é opcional e nenhuma usa `continue-on-error`. Os relatórios de `build/qemu-riscv64/reports/` são anexados ao run mesmo quando uma etapa falha.
 
