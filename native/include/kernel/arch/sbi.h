@@ -14,6 +14,7 @@ struct sbi_result sbi_call(unsigned long extension, unsigned long function, unsi
 size_t sbi_console_write(const char *bytes, size_t length);
 void sbi_timer_set(uint64_t deadline);
 _Noreturn void sbi_shutdown(void);
+_Noreturn void sbi_restart(void);
 _Noreturn void cpu_wait_forever(void);
 
 #endif

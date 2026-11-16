@@ -1,0 +1,7 @@
+#ifndef KERNEL_ABI_POWER_H
+#define KERNEL_ABI_POWER_H
+
+#define POWER_ACTION_SHUTDOWN 0u
+#define POWER_ACTION_RESTART 1u
+
+#endif
