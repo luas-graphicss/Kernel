@@ -41,6 +41,7 @@ class Limits:
 @dataclass(frozen=True, slots=True)
 class Deadlines:
     boot_seconds: int
+    selftest_seconds: int
 
 
 @dataclass(frozen=True, slots=True)

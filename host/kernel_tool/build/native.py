@@ -12,19 +12,43 @@ from kernel_tool.workspace import Workspace
 
 BUILD_GOAL = "all"
 ANALYSIS_GOAL = "analyze"
+LINK_MAP_SUFFIX = ".map"
 
 
 @dataclass(frozen=True, slots=True)
 class BuildOutputs:
     directory: Path
     kernel: Path
-    link_map: Path
+    selftest_kernel: Path
+    init_program: Path
+    init_image: Path
+    fault_image: Path
+
+    @property
+    def artifacts(self) -> tuple[Path, ...]:
+        return (self.kernel, self.selftest_kernel, self.init_image, self.fault_image)
+
+    @property
+    def executables(self) -> tuple[Path, ...]:
+        return (self.kernel, self.selftest_kernel, self.init_program)
 
 
-def build_outputs(workspace: Workspace, profile: Profile) -> BuildOutputs:
-    directory = workspace.build_dir / profile.name
-    kernel = directory / "kernel.elf"
-    return BuildOutputs(directory=directory, kernel=kernel, link_map=Path(f"{kernel}.map"))
+def link_map(executable: Path) -> Path:
+    return executable.with_name(executable.name + LINK_MAP_SUFFIX)
+
+
+def build_outputs(
+    workspace: Workspace, profile: Profile, directory: Path | None = None
+) -> BuildOutputs:
+    root = directory or workspace.build_dir / profile.name
+    return BuildOutputs(
+        directory=root,
+        kernel=root / "kernel.elf",
+        selftest_kernel=root / "kernel-selftest.elf",
+        init_program=root / "user" / "init.elf",
+        init_image=root / "init.img",
+        fault_image=root / "fault.img",
+    )
 
 
 def make_variables(profile: Profile, toolchain: Toolchain, directory: Path) -> dict[str, str]:
@@ -40,7 +64,14 @@ def make_variables(profile: Profile, toolchain: Toolchain, directory: Path) -> d
         "SUPERVISOR_HEAP_BYTES": hex(limits.supervisor_heap_bytes),
         "USER_REGION_BASE": hex(layout.user_region_base),
         "USER_REGION_BYTES": hex(layout.user_region_bytes),
+        "USER_HEAP_BYTES": hex(layout.user_heap_bytes),
+        "USER_STACK_BYTES": hex(layout.user_stack_bytes),
         "PROFILE_MEMORY_BYTES": str(limits.memory_bytes),
+        "PROFILE_PROCESSES": str(limits.processes),
+        "PROFILE_PROCESS_HEAP_BYTES": str(limits.process_heap_bytes),
+        "PROFILE_CAPABILITIES_PER_PROCESS": str(limits.capabilities_per_process),
+        "PROFILE_IPC_PENDING_BYTES_PER_PROCESS": str(limits.ipc_pending_bytes_per_process),
+        "PROFILE_IPC_PENDING_BYTES_GLOBAL": str(limits.ipc_pending_bytes_global),
     }
 
 
@@ -50,15 +81,23 @@ def reproducible_environment(toolchain: Toolchain) -> dict[str, str]:
         "LC_ALL": "C",
         "TZ": "UTC",
         "SOURCE_DATE_EPOCH": str(toolchain.lock.source_date_epoch),
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONHASHSEED": "0",
     }
 
 
-def run_make(workspace: Workspace, profile: Profile, toolchain: Toolchain, goal: str) -> None:
+def run_make(
+    workspace: Workspace,
+    profile: Profile,
+    toolchain: Toolchain,
+    goal: str,
+    directory: Path | None = None,
+) -> None:
     make = shutil.which("make")
     if make is None:
         raise InfrastructureError("required host tool 'make' is not installed")
 
-    outputs = build_outputs(workspace, profile)
+    outputs = build_outputs(workspace, profile, directory)
     variables = make_variables(profile, toolchain, outputs.directory)
     command = [
         make,
@@ -80,9 +119,16 @@ def run_make(workspace: Workspace, profile: Profile, toolchain: Toolchain, goal:
         raise CheckError(f"make {goal} exited with status {completed.returncode}")
 
 
-def build_image(workspace: Workspace, profile: Profile, toolchain: Toolchain) -> BuildOutputs:
-    run_make(workspace, profile, toolchain, BUILD_GOAL)
-    outputs = build_outputs(workspace, profile)
-    if not outputs.kernel.is_file():
-        raise CheckError(f"the build did not produce {outputs.kernel}")
+def build_image(
+    workspace: Workspace, profile: Profile, toolchain: Toolchain, directory: Path | None = None
+) -> BuildOutputs:
+    run_make(workspace, profile, toolchain, BUILD_GOAL, directory)
+    outputs = build_outputs(workspace, profile, directory)
+    require_artifacts(outputs)
     return outputs
+
+
+def require_artifacts(outputs: BuildOutputs) -> None:
+    for artifact in (*outputs.artifacts, outputs.init_program):
+        if not artifact.is_file():
+            raise CheckError(f"{artifact} does not exist; run kernel-tool build first")

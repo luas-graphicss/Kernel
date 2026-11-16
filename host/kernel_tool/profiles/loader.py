@@ -122,7 +122,10 @@ def _limits(section: Section) -> Limits:
 
 
 def _deadlines(section: Section) -> Deadlines:
-    deadlines = Deadlines(boot_seconds=section.positive("boot_seconds"))
+    deadlines = Deadlines(
+        boot_seconds=section.positive("boot_seconds"),
+        selftest_seconds=section.positive("selftest_seconds"),
+    )
     section.finish()
     return deadlines
 

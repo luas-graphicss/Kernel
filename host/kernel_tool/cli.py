@@ -5,12 +5,18 @@ import sys
 from collections.abc import Sequence
 from pathlib import Path
 
-from kernel_tool.commands import build, emulation, toolchain
+from kernel_tool.commands import artifacts, build, emulation, test, toolchain
 from kernel_tool.commands.options import Command
 from kernel_tool.outcome import ToolError
 from kernel_tool.workspace import open_workspace
 
-REGISTRARS = (toolchain.register, build.register, emulation.register)
+REGISTRARS = (
+    toolchain.register,
+    build.register,
+    emulation.register,
+    test.register,
+    artifacts.register,
+)
 
 logger = logging.getLogger("kernel_tool")
 

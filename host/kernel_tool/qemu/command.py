@@ -14,12 +14,14 @@ class BootRequest:
     arguments: str | None = None
 
 
-def machine_arguments(profile: Profile, toolchain: Toolchain, memory_mib: int) -> list[str]:
+def machine_arguments(
+    profile: Profile, toolchain: Toolchain, memory_mib: int, machine_options: tuple[str, ...] = ()
+) -> list[str]:
     machine = profile.machine
     arguments = [
         str(toolchain.emulator(machine.emulator)),
         "-machine",
-        machine.machine,
+        ",".join((machine.machine, *machine_options)),
         "-cpu",
         machine.cpu,
         "-smp",
@@ -58,4 +60,13 @@ def boot_command(profile: Profile, toolchain: Toolchain, request: BootRequest) -
         command.extend(["-dtb", str(request.device_tree)])
     if request.arguments is not None:
         command.extend(["-append", request.arguments])
+    return command
+
+
+def device_tree_dump_command(
+    profile: Profile, toolchain: Toolchain, memory_mib: int, output: Path
+) -> list[str]:
+    escaped_output = str(output).replace(",", ",,")
+    command = machine_arguments(profile, toolchain, memory_mib, (f"dumpdtb={escaped_output}",))
+    command.extend(["-bios", str(toolchain.component_path(profile.machine.firmware))])
     return command

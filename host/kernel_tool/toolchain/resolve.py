@@ -23,6 +23,10 @@ class Toolchain:
         return self.roots[COMPILER_ARTIFACT] / "bin" / f"{CROSS_PREFIX}{name}"
 
     @property
+    def compiler_root(self) -> Path:
+        return self.roots[COMPILER_ARTIFACT]
+
+    @property
     def cross_prefix(self) -> Path:
         return self.roots[COMPILER_ARTIFACT] / "bin" / CROSS_PREFIX
 

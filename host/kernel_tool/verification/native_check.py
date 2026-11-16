@@ -12,6 +12,8 @@ HOSTED_SOURCES = (
     "native/supervisor/devices/device_tree/tokens.c",
     "native/supervisor/memory/layout.c",
     "native/supervisor/memory/range.c",
+    "native/supervisor/processes/syscall.c",
+    "native/supervisor/processes/user_image.c",
 )
 INCLUDE_DIRECTORIES = ("native/include", "tests/native/support")
 TEST_DIRECTORY = Path("tests") / "native"

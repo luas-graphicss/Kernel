@@ -1,7 +1,7 @@
 import argparse
 import sys
 
-from kernel_tool.build.native import build_outputs
+from kernel_tool.build.native import build_outputs, require_artifacts
 from kernel_tool.commands.options import (
     CommandRegistry,
     add_profile_option,
@@ -33,12 +33,15 @@ def run_image(workspace: Workspace, options: argparse.Namespace) -> ExitCode:
     profile = selected_profile(workspace, options)
     toolchain = load_toolchain(workspace)
     outputs = build_outputs(workspace, profile)
-    if not outputs.kernel.is_file():
-        raise CheckError(f"{outputs.kernel} does not exist; run kernel-tool build first")
+    require_artifacts(outputs)
 
     requested_deadline: float | None = options.deadline
     deadline = requested_deadline or float(profile.deadlines.boot_seconds)
-    request = BootRequest(kernel=outputs.kernel, memory_mib=profile.machine.memory_mib)
+    request = BootRequest(
+        kernel=outputs.kernel,
+        memory_mib=profile.machine.memory_mib,
+        boot_module=outputs.init_image,
+    )
     result = run_session(boot_command(profile, toolchain, request), deadline)
     sys.stdout.write(result.transcript)
 

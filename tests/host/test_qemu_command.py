@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from kernel_tool.profiles.loader import DEFAULT_PROFILE, load_profile
-from kernel_tool.qemu.command import BootRequest, boot_command
+from kernel_tool.qemu.command import BootRequest, boot_command, device_tree_dump_command
 from kernel_tool.toolchain.lock import load_lock
 from kernel_tool.toolchain.resolve import Toolchain
 
@@ -60,3 +60,34 @@ def test_boot_command_adds_optional_boot_inputs() -> None:
     assert option_value(command, "-initrd") == "/build/user.img"
     assert option_value(command, "-dtb") == "/build/patched.dtb"
     assert option_value(command, "-append") == "selftest=supervisor-trap"
+
+
+def test_boot_never_enables_semihosting() -> None:
+    profile = load_profile(REPOSITORY, DEFAULT_PROFILE)
+    request = BootRequest(
+        kernel=Path("/build/kernel.elf"),
+        memory_mib=256,
+        boot_module=Path("/build/init.img"),
+        arguments="probe=supervisor-trap",
+    )
+
+    command = boot_command(profile, reference_toolchain(), request)
+
+    assert not any("semihosting" in argument for argument in command)
+
+
+def test_device_tree_dump_uses_the_reference_machine_without_booting() -> None:
+    profile = load_profile(REPOSITORY, DEFAULT_PROFILE)
+
+    command = device_tree_dump_command(
+        profile, reference_toolchain(), 128, Path("/build/a,b/generated.dtb")
+    )
+
+    assert (
+        option_value(command, "-machine")
+        == "virt,aia=none,acpi=off,dumpdtb=/build/a,,b/generated.dtb"
+    )
+    assert option_value(command, "-m") == "128M"
+    assert option_value(command, "-cpu") == "rv64,h=off,v=off"
+    assert "-kernel" not in command
+    assert "-serial" not in command
