@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+
 from kernel_tool.cli import main
 from kernel_tool.outcome import CheckError, ExitCode
 from kernel_tool.workspace import default_cache_dir, open_workspace

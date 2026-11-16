@@ -4,6 +4,7 @@ import urllib.error
 from pathlib import Path
 
 import pytest
+
 from kernel_tool.outcome import CheckError, InfrastructureError
 from kernel_tool.toolchain import fetch
 from kernel_tool.toolchain.fetch import COMPLETE_MARKER, ensure_artifact, sha256_file

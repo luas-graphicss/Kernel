@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+
 from kernel_tool.outcome import CheckError
 from kernel_tool.toolchain.lock import load_lock
 
