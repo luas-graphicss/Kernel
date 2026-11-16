@@ -18,11 +18,20 @@ Uma inclusão nativa nova precisa de pelo menos um destes motivos: depende de pr
 
 O supervisor nativo não depende de Python para tratar uma trap, liberar recurso ou encerrar processo. Python não executa em hard IRQ.
 
-A superfície exposta ao Python do supervisor é o módulo `_supervisor`, com quatro funções: `memory_facts`, `resource_limits`, `user_image_facts` e `run_user_image`. Cada binding novo entra nesta lista com o motivo.
+A superfície exposta ao Python do supervisor é o módulo `_supervisor`. Nenhuma função recebe argumentos. Cada binding novo entra nesta tabela com o motivo.
+
+| Binding | Devolve | Motivo |
+| --- | --- | --- |
+| `machine()` | Hart de boot, base e tamanho da RAM | Fatos do DTB, que só o código nativo lê e valida |
+| `limits()` | Limites do perfil compilado e tamanho do heap do supervisor | O perfil faz parte da ABI e o heap vem do layout de linkagem |
+| `user_region()` | Base e tamanho da região de usuário | Layout de memória física |
+| `arguments()` | Texto de `bootargs` do DTB | Fato do DTB. Nenhuma política usa ainda; o autoteste confere o tipo |
+| `inspect_boot_module()` | Estado da validação e os tamanhos de arquivo, memória, heap e stack da imagem | Validação de bytes não confiáveis antes de a política decidir a admissão |
+| `run_boot_module()` | Motivo do término, `exit` ou `fault`, com o status ou a causa | Depende de privilégio: carrega a imagem, entra em U-mode e trata as traps |
 
 ## Consequências
 
-Toda chamada entre os dois lados tem custo e precisa de validação nos dois sentidos. O binding recebe e devolve inteiros e tuplas; não devolve ponteiro nem endereço físico reutilizável.
+Toda chamada entre os dois lados tem custo e precisa de validação nos dois sentidos. Os bindings devolvem inteiros, textos e tuplas. Endereços físicos aparecem só como fatos para orçamento e diagnóstico: nenhum binding aceita endereço como argumento.
 
 O interpretador supervisor e as políticas congeladas pertencem à TCB. Um erro de política ali tem o mesmo peso de um erro em C.
 
