@@ -18,6 +18,7 @@ from kernel_tool.commands import (
     storage,
     test,
     toolchain,
+    verify,
 )
 from kernel_tool.commands.options import Command
 from kernel_tool.outcome import ToolError
@@ -29,6 +30,7 @@ REGISTRARS = (
     emulation.register,
     test.register,
     fault_test.register,
+    verify.register,
     fuzz.register,
     boots.register,
     soak.register,
