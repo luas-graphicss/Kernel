@@ -1,5 +1,7 @@
 # Aplicações
 
+[English](applications.en.md)
+
 Uma aplicação é um programa Python lido de um arquivo e executado em um processo próprio, em U-mode, com o interpretador, o heap e as capabilities só dele. Quem inicia uma aplicação é o gerente, a pedido do shell, pela operação `LAUNCH` de `control-service.md`.
 
 ## Como uma aplicação inicia

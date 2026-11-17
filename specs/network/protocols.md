@@ -1,5 +1,7 @@
 # Protocolos de rede
 
+[English](protocols.en.md)
+
 O serviço de rede é um processo em U-mode, `kernel_services.network.main`. Ele contém o driver do `virtio-net`, a pilha IPv4 e os sockets, e fala Ethernet, ARP, IPv4, ICMP, UDP e TCP por uma interface com endereço estático. Esta página diz o que cada protocolo aceita, o que recusa e com que limites. A API que os outros processos usam está em `socket-service.md`.
 
 O perfil é o de uma estação em uma rede local: sem IPv6, sem DHCP, sem DNS e sem encaminhamento. O que não aparece aqui como suportado não é suportado.

@@ -1,5 +1,7 @@
 # Serviço de sockets
 
+[English](socket-service.en.md)
+
 O serviço de rede entrega sockets a outros processos por IPC. Um processo só abre um socket se recebeu uma capability de acesso, e cada acesso carrega um conjunto de direitos. Não existe socket por nome, por variável de ambiente nem por caminho de arquivo. As mensagens seguem `specs/abi/messages.md`, os formatos estão em `kernel_protocol.services.network` e a biblioteca cliente é `kernel_client.sockets`. Os protocolos que trafegam por baixo estão em `protocols.md`.
 
 ## Acesso e sessão
@@ -109,7 +111,6 @@ Descrição de um socket: tipo, em 1 byte, estado, em 1, porta local, em 2, ende
 | `SEND`, `RECEIVE` | A conexão foi encerrada por reset | `CONNECTION_RESET` |
 | `SEND`, `RECEIVE` | O peer não confirmou dentro das retransmissões | `TIMED_OUT` |
 | `SEND_TO` | Mais de 4026 bytes | `MESSAGE_TOO_LARGE` |
-
 | `RECEIVE_FROM` | Um datagrama anterior voltou com porta inalcançável | `CONNECTION_REFUSED`, uma vez |
 | `ECHO` | Mais de 1024 bytes de dados | `INVALID_ARGUMENT` |
 
