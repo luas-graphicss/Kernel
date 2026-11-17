@@ -11,6 +11,7 @@ from kernel_tool.commands import (
     emulation,
     fault_test,
     fuzz,
+    interfaces,
     storage,
     test,
     toolchain,
@@ -28,6 +29,7 @@ REGISTRARS = (
     fuzz.register,
     storage.register,
     artifacts.register,
+    interfaces.register,
 )
 
 logger = logging.getLogger("kernel_tool")
