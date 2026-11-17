@@ -14,6 +14,7 @@ from kernel_tool.commands import (
     fault_test,
     fuzz,
     interfaces,
+    reproduce,
     soak,
     storage,
     test,
@@ -37,6 +38,7 @@ REGISTRARS = (
     benchmark.register,
     storage.register,
     artifacts.register,
+    reproduce.register,
     interfaces.register,
 )
 
