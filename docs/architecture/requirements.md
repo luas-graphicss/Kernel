@@ -1,5 +1,7 @@
 # Matriz de requisitos
 
+[English](requirements.en.md)
+
 Cada requisito tem a fase em que é entregue pela primeira vez e a evidência que permite marcá-lo como aceito. Sem a evidência, o requisito continua aberto.
 
 Esta página fala de requisitos. O estado de cada syscall, de cada operação de serviço e de cada comando do shell, com o caso de teste que o exercita, está em `api-conformance.md`. Os resultados das execuções de aceite ficam em `docs/acceptance/`.

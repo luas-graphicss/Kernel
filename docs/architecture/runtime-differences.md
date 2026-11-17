@@ -1,5 +1,7 @@
 # Diferenças entre CPython e o runtime do convidado
 
+[English](runtime-differences.en.md)
+
 O código de `src/` e o corpus de `tests/conformance/corpus/` rodam em dois interpretadores: CPython 3.13 no host, que serve de referência, e MicroPython 1.29.0 no convidado. Este documento lista as diferenças aceitas entre os dois e a regra que o código compartilhado segue para não depender delas.
 
 ## O que não pode diferir
