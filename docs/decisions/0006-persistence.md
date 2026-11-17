@@ -1,5 +1,7 @@
 # ADR 0006: Persistência
 
+[English](0006-persistence.en.md)
+
 Estado: aceita.
 
 ## Contexto

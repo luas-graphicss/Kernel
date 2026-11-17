@@ -1,5 +1,7 @@
 # ADR 0005: Capabilities e identidade geracional
 
+[English](0005-capabilities.en.md)
+
 Estado: aceita.
 
 ## Contexto

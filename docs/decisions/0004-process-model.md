@@ -1,5 +1,7 @@
 # ADR 0004: Modelo de processos
 
+[English](0004-process-model.en.md)
+
 Estado: aceita.
 
 ## Contexto

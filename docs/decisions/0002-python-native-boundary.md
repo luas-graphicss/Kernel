@@ -1,5 +1,7 @@
 # ADR 0002: Fronteira entre Python e código nativo
 
+[English](0002-python-native-boundary.en.md)
+
 Estado: aceita.
 
 ## Contexto

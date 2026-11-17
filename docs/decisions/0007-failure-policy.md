@@ -1,5 +1,7 @@
 # ADR 0007: Política de falhas
 
+[English](0007-failure-policy.en.md)
+
 Estado: aceita.
 
 ## Contexto

@@ -1,5 +1,7 @@
 # ADR 0010: Homologação e distribuição
 
+[English](0010-release-qualification.en.md)
+
 Estado: aceita.
 
 ## Contexto
