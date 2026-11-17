@@ -17,6 +17,7 @@ from kernel_tool.verification.artifacts import (
     differing_artifacts,
     verify_artifacts,
 )
+from kernel_tool.verification.machine_paths import machine_path_problems
 from kernel_tool.workspace import Workspace
 
 REPRODUCTION_SUFFIX = "-reproduce"
@@ -27,7 +28,8 @@ logger = logging.getLogger(__name__)
 def register(commands: CommandRegistry) -> None:
     verify = commands.add_parser(
         "verify-artifacts",
-        help="inspect the built images: static linking, input origins, layout and hashes",
+        help="inspect the built images: static linking, input origins, layout, hashes "
+        "and paths of the build machine",
     )
     add_profile_option(verify)
     verify.add_argument(
@@ -45,7 +47,7 @@ def run_verify(workspace: Workspace, options: argparse.Namespace) -> ExitCode:
     require_artifacts(outputs)
 
     report = verify_artifacts(outputs, profile, toolchain)
-    problems = list(report.problems)
+    problems = [*report.problems, *machine_path_problems(workspace.root, outputs, toolchain)]
     reproduce: bool = options.reproduce
     if reproduce:
         second_directory = outputs.directory.with_name(outputs.directory.name + REPRODUCTION_SUFFIX)
