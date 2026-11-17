@@ -1,10 +1,12 @@
 from kernel_apps.shell.session import Session
-from kernel_protocol.errors.codes import INVALID_ARGUMENT, OK, KernelError
+from kernel_client.files import File, Namespace
+from kernel_protocol.errors.codes import ALREADY_EXISTS, INVALID_ARGUMENT, OK, KernelError
 from kernel_protocol.services.files import (
     KIND_DIRECTORY,
     MODE_READ_WRITE,
     OPEN_CREATE,
     OPEN_DIRECTORY,
+    OPEN_EXCLUSIVE,
     OPEN_READ,
     OPEN_TRUNCATE,
     OPEN_WRITE,
@@ -62,16 +64,30 @@ def make_directory(session: Session, arguments: list[str]) -> None:
     session.files().make_directory(path_of(arguments))
 
 
+def open_for_replacement(namespace: Namespace, path: bytes) -> tuple[File, bool]:
+    try:
+        return namespace.open(path, OPEN_WRITE | OPEN_CREATE | OPEN_EXCLUSIVE), True
+    except KernelError as error:
+        if error.code != ALREADY_EXISTS:
+            raise
+    return namespace.open(path, OPEN_WRITE | OPEN_TRUNCATE), False
+
+
 def write_file(session: Session, arguments: list[str]) -> None:
     path = path_of(arguments)
     content = bytes(SEPARATOR.join(arguments[1:]), "utf-8") + LINE_BREAK
-    opened = session.files().open(path, OPEN_WRITE | OPEN_CREATE | OPEN_TRUNCATE)
+    namespace = session.files()
+    opened, is_new = open_for_replacement(namespace, path)
     try:
         written = opened.write(0, content)
-    finally:
+        if written != len(content):
+            raise KernelError(INVALID_ARGUMENT, "the file took less than the line")
+    except KernelError:
         opened.close()
-    if written != len(content):
-        raise KernelError(INVALID_ARGUMENT, "the file took less than the line")
+        if is_new:
+            namespace.remove(path)
+        raise
+    opened.close()
     session.write(f"write: bytes={written}")
 
 
