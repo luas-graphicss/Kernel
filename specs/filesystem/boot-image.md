@@ -1,5 +1,7 @@
 # Imagem de boot
 
+[English](boot-image.en.md)
+
 A imagem de boot é um conjunto de arquivos somente leitura que o `kernel-tool build` grava em `boot.img` e o QEMU entrega como o disco `kernel-boot`. O serviço de arquivos a monta em `boot`. Ela não tem diretórios próprios: cada arquivo guarda o caminho inteiro, e os diretórios saem dos caminhos.
 
 Os inteiros são little-endian e sem sinal. Os blocos têm 4096 bytes e os checksums são CRC-32.

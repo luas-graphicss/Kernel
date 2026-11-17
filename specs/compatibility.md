@@ -1,5 +1,7 @@
 # Política de compatibilidade
 
+[English](compatibility.en.md)
+
 Cinco interfaces do sistema estão congeladas na versão 1.0. Esta página diz o que cada uma cobre, o que pode mudar sem quebrar quem já usa e o que precisa acontecer quando algo muda.
 
 ## Interfaces congeladas
