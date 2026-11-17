@@ -61,7 +61,7 @@ Sem o `kernel-tool`, a chave `launch` de `manifest.json` traz os argumentos do e
 uv run kernel-tool update <pacote novo> --target <diretório>
 ```
 
-O sistema precisa estar parado. `update` confere o pacote novo, confere que ele lê o formato do volume instalado, copia-o e passa a usá-lo. O release anterior continua em `releases/`, e o volume não é tocado. Um pacote que não lê o formato do volume é recusado, e a instalação fica como estava.
+O sistema precisa estar parado. `update` confere o pacote novo, confere que ele lê o formato do volume instalado, copia-o e passa a usá-lo. O release anterior continua em `releases/`, e o volume não é tocado. Um pacote que não lê o formato do volume é recusado, e a instalação fica como estava. A troca é a substituição de um arquivo, `installation.json`: se o comando for interrompido antes dela, a instalação continua no release anterior.
 
 ## Voltar ao release anterior
 

@@ -1,4 +1,5 @@
 import json
+import os
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
@@ -17,6 +18,7 @@ from kernel_tool.scenarios.disks import DATA_BLOCKS, DATA_VOLUME
 from kernel_tool.storage.volumes import create_image
 
 STATE_FILE = "installation.json"
+PENDING_STATE_FILE = "installation.json.pending"
 RELEASES_DIRECTORY = "releases"
 VERSION_BYTES = 4
 BYTE_ORDER: Final = "little"
@@ -142,6 +144,10 @@ def _copy_release(bundle: Path, target: Path, name: str) -> None:
 
 def _record(installation: Installation) -> Installation:
     state = {"current": installation.current, "previous": installation.previous}
-    path = installation.target / STATE_FILE
-    path.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding=ENCODING)
+    pending = installation.target / PENDING_STATE_FILE
+    with pending.open("w", encoding=ENCODING) as file:
+        file.write(json.dumps(state, indent=2, sort_keys=True) + "\n")
+        file.flush()
+        os.fsync(file.fileno())
+    pending.replace(installation.target / STATE_FILE)
     return installation

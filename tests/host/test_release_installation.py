@@ -162,3 +162,23 @@ def test_a_rollback_needs_an_earlier_release(tmp_path: Path) -> None:
 
     with pytest.raises(CheckError, match="no earlier release"):
         rollback(target)
+
+
+def test_an_update_interrupted_at_the_switch_keeps_the_earlier_release(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    target = tmp_path / "site"
+    target.mkdir()
+    install(bundle(tmp_path, "1.0.0", [FORMAT_VERSION]), target)
+    newer = bundle(tmp_path, "1.0.1", [FORMAT_VERSION])
+
+    def interrupt(_pending: Path, _state: Path) -> Path:
+        raise OSError("the switch was interrupted")
+
+    monkeypatch.setattr(Path, "replace", interrupt)
+
+    with pytest.raises(OSError, match="interrupted"):
+        update(newer, target)
+
+    installed = open_installation(target)
+    assert (installed.current, installed.previous) == ("kernel-1.0.0-test", None)
