@@ -72,5 +72,6 @@ def _run(command: list[str], signed: bytes | None, action: str) -> None:
     except (OSError, subprocess.SubprocessError) as error:
         raise InfrastructureError(f"cannot run {SIGNER}: {error}") from error
     if completed.returncode != 0:
-        detail = completed.stderr.decode("utf-8", errors="replace").strip()
+        said = (completed.stderr + completed.stdout).decode("utf-8", errors="replace").strip()
+        detail = said or f"it ended with status {completed.returncode}"
         raise CheckError(f"{SIGNER} could not {action} the checksums: {detail}")

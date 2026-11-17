@@ -78,7 +78,7 @@ def test_a_signed_bundle_verifies_only_intact_and_for_its_signer(tmp_path: Path)
     sign_bundle(bundle, key, tmp_path / "repository")
     verify_bundle(bundle, signers, IDENTITY)
 
-    with pytest.raises(CheckError, match="could not verify"):
+    with pytest.raises(CheckError, match=r"could not verify the checksums: \S"):
         verify_bundle(bundle, signers, "someone@example.org")
     (bundle / "kernel.elf").write_bytes(b"another kernel")
     with pytest.raises(CheckError, match="does not match its checksum"):
@@ -93,7 +93,7 @@ def test_changed_checksums_do_not_verify_against_the_signature(tmp_path: Path) -
     (bundle / "kernel.elf").write_bytes(b"another kernel")
     write_checksums(bundle)
 
-    with pytest.raises(CheckError, match="could not verify"):
+    with pytest.raises(CheckError, match=r"could not verify the checksums: \S"):
         verify_bundle(bundle, signers, IDENTITY)
 
 
