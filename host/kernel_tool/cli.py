@@ -7,6 +7,7 @@ from pathlib import Path
 
 from kernel_tool.commands import (
     artifacts,
+    benchmark,
     build,
     emulation,
     fault_test,
@@ -27,6 +28,7 @@ REGISTRARS = (
     test.register,
     fault_test.register,
     fuzz.register,
+    benchmark.register,
     storage.register,
     artifacts.register,
     interfaces.register,
