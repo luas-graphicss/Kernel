@@ -10,6 +10,7 @@ from kernel_tool.commands import (
     build,
     emulation,
     fault_test,
+    fuzz,
     storage,
     test,
     toolchain,
@@ -24,6 +25,7 @@ REGISTRARS = (
     emulation.register,
     test.register,
     fault_test.register,
+    fuzz.register,
     storage.register,
     artifacts.register,
 )
