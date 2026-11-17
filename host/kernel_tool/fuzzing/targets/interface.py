@@ -24,7 +24,7 @@ from kernel_protocol.wire.message import (
     encode_message,
 )
 from kernel_protocol.wire.spawn import REQUEST_BYTES, encode_spawn_request
-from kernel_services.console.discipline import LineDiscipline
+from kernel_services.console.discipline import LineDiscipline, OverlongLine
 from kernel_tool.fuzzing.model import Family, InterpretedTarget, InvariantError, NativeTarget
 from kernel_tool.fuzzing.native import IPC_MESSAGE_ENTRY, SPAWN_REQUEST_ENTRY
 from kernel_tool.fuzzing.targets.text import guest_text
@@ -117,6 +117,7 @@ def console_seeds() -> tuple[bytes, ...]:
         b'write data/note "two words"\r\nls data\r',
         b"first line\rsecomd\x7f\x7fnd line\n",
         b"cat \xc3\xa9\x7f\x15ps\n",
+        b"ls\tboot\x1b[A\x1bOP\r",
     )
 
 
@@ -127,6 +128,8 @@ def type_on_the_console(data: bytes) -> None:
         line = discipline.take_line()
         if line is None:
             return
+        if isinstance(line, OverlongLine):
+            continue
         if len(line) > MAX_LINE_BYTES:
             raise InvariantError("the console delivered a line longer than its limit")
         try:
@@ -174,6 +177,7 @@ TARGETS = (
         family=Family.INTERFACE,
         sources=(
             "src/kernel_services/console/discipline.py",
+            "src/kernel_services/console/escapes.py",
             "src/kernel_apps/shell/words.py",
         ),
         max_input_bytes=MAX_CONSOLE_BYTES,

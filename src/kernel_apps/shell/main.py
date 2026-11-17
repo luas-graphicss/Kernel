@@ -1,4 +1,4 @@
-from kernel_apps.shell.interpreter import run_line
+from kernel_apps.shell.interpreter import serve_line
 from kernel_apps.shell.session import Session
 from kernel_client import services
 from kernel_client.control import Control
@@ -17,4 +17,4 @@ def main() -> bool:
     session.write("shell: ready")
     while True:
         session.write_bytes(PROMPT)
-        run_line(session, session.read_line())
+        serve_line(session)
