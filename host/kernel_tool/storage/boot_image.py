@@ -20,6 +20,7 @@ from kernel_services.filesystem.boot.layout import (
 )
 from kernel_services.filesystem.format.layout import KIND_DIRECTORY
 from kernel_tool.outcome import CheckError
+from kernel_tool.release.identity import project_version
 from kernel_tool.storage.image_store import ImageStore
 from kernel_tool.toolchain.lock import ToolchainLock
 from kernel_tool.toolchain.resolve import RUNTIME_ARTIFACT
@@ -42,8 +43,8 @@ def runtime_tag(lock: ToolchainLock) -> bytes:
     return f"{artifact.name}-{release}".encode("ascii")
 
 
-def release_file(runtime: bytes) -> BootFile:
-    content = f"abi={ABI_VERSION}\nruntime={runtime.decode('ascii')}\n"
+def release_file(runtime: bytes, version: str) -> BootFile:
+    content = f"abi={ABI_VERSION}\nruntime={runtime.decode('ascii')}\nversion={version}\n"
     return BootFile(RELEASE_PATH, content.encode("ascii"))
 
 
@@ -88,7 +89,8 @@ def build_image(files: Sequence[BootFile], runtime: bytes) -> bytes:
 
 def write_boot_image(root: Path, lock: ToolchainLock, output: Path) -> None:
     runtime = runtime_tag(lock)
-    output.write_bytes(build_image((*load_files(root), release_file(runtime)), runtime))
+    release = release_file(runtime, project_version(root))
+    output.write_bytes(build_image((*load_files(root), release), runtime))
 
 
 def read_image(content: bytes, runtime: bytes) -> dict[str, bytes]:

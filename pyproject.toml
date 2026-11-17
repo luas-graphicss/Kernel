@@ -4,13 +4,16 @@ build-backend = "hatchling.build"
 
 [project]
 name = "kernel"
-version = "0.1.0"
+version = "1.0.0rc1"
 description = "Python-first RISC-V kernel with a small freestanding native base"
 readme = "README.md"
 requires-python = ">=3.13"
 license = "GPL-3.0-only"
 license-files = ["LICENSE"]
 dependencies = []
+
+[project.urls]
+Repository = "https://github.com/luas-graphicss/Kernel"
 
 [project.scripts]
 kernel-tool = "kernel_tool.cli:main"

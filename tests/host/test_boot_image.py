@@ -10,6 +10,7 @@ from kernel_services.filesystem.boot.layout import (
     MAX_FILE_BYTES,
 )
 from kernel_tool.outcome import CheckError
+from kernel_tool.release.identity import project_version
 from kernel_tool.storage.boot_image import (
     MANIFEST,
     RELEASE_PATH,
@@ -55,9 +56,9 @@ def test_the_runtime_tag_names_the_pinned_interpreter_release() -> None:
 
 
 def test_the_release_file_states_the_interface_and_the_runtime() -> None:
-    content = f"abi={ABI_VERSION}\nruntime=micropython-1.29\n".encode("ascii")
+    content = f"abi={ABI_VERSION}\nruntime=micropython-1.29\nversion=1.2.3\n".encode("ascii")
 
-    assert release_file(RUNTIME) == BootFile(RELEASE_PATH, content)
+    assert release_file(RUNTIME, "1.2.3") == BootFile(RELEASE_PATH, content)
 
 
 def test_an_image_gives_back_every_file_whatever_the_order_they_were_listed() -> None:
@@ -164,4 +165,4 @@ def test_the_boot_image_of_the_repository_holds_the_system_files_and_the_program
     assert files["system/license"] == (REPOSITORY / "LICENSE").read_bytes()
     assert files["system/config"] == (REPOSITORY / "config/system/system.conf").read_bytes()
     assert files["apps/sysinfo.py"] == (REPOSITORY / "apps/sysinfo.py").read_bytes()
-    assert files[RELEASE_PATH] == release_file(RUNTIME).content
+    assert files[RELEASE_PATH] == release_file(RUNTIME, project_version(REPOSITORY)).content
