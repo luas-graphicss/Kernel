@@ -25,8 +25,13 @@ O alvo é a máquina `virt` do QEMU com o firmware OpenSBI. O convidado não tem
 - Parada ordenada: novas aplicações recusadas, aplicações encerradas, serviços parados na ordem inversa, volumes sincronizados e, por fim, desligamento ou reboot pelo SBI.
 - Modelos puros de handles geracionais, seleção de processos e contabilização de recursos. Um corpus de 10.000 transições roda em CPython e dentro do convidado, e os resultados precisam ser iguais.
 - `kernel-tool`, que baixa a toolchain fixada por hash, compila, inicia o QEMU com deadline, executa os cenários e inspeciona as imagens. Ele também cria, verifica e inspeciona volumes, e reconstrói os estados que uma queda de energia deixaria no disco. Para a rede, liga o convidado a uma estação de teste isolada no host, degrada o enlace de propósito, injeta quadros forjados e grava o tráfego.
+- Homologação pelo `kernel-tool`: a matriz de verificação inteira em um comando, fuzzing de 14 alvos em quatro famílias de entrada com corpus versionado, boot repetido, soak de um boot sob carga mista, medição dos budgets e build refeito em diretórios vazios. Cada relatório leva o hash das imagens a que se refere.
+- Interfaces 1.0 congeladas, com política de compatibilidade: ABI, protocolo dos serviços, imagens, configuração e formato do volume.
+- Pacote de release montado no host, com manifesto, checksums, SBOM em SPDX 2.3, inventário de licenças e assinatura OpenSSH com chave de fora do repositório. Instalação, atualização e rollback trocam as imagens e mantêm o volume de dados.
 
 O kernel usa um único hart, e o isolamento foi exercitado só no QEMU com TCG. A durabilidade foi demonstrada só no `virtio-blk` do QEMU: um disco que confirme um flush que não fez está fora do que foi testado. A rede foi exercitada contra a pilha TCP/IP do Linux, em uma rede isolada; o tráfego não é cifrado, e o shell não autentica quem está na porta serial.
+
+A versão 1.0 ainda não está qualificada. Dois gates de release pedem 24 horas de execução cada, o soak e o fuzzing de cada família, e ainda não foram cumpridos. O estado de cada gate, com o que foi executado, está no [registro de homologação](docs/acceptance/qualification-and-distribution.md).
 
 ## Requisitos do host
 
@@ -80,6 +85,7 @@ uv run kernel-tool test --suite network-interop
 uv run kernel-tool test --suite applications
 uv run kernel-tool test --suite supervision
 uv run kernel-tool test --suite system-journey
+uv run kernel-tool test --suite release-journey
 uv run kernel-tool fault-test --suite device-reset
 uv run kernel-tool fault-test --suite storage-crash
 uv run kernel-tool fault-test --suite network-faults
@@ -104,6 +110,7 @@ uv run kernel-tool verify-artifacts --reproduce
 | `test --suite applications` | Programas do volume iniciados pelo shell: argumentos, memória não compartilhada entre execuções, capabilities recebidas, exceção, erro de sintaxe, arquivo ausente, laço encerrado por `kill`, heap esgotado, limite de aplicações e parada com aplicações em execução |
 | `test --suite supervision` | Ordem de início e de parada, serviço que não fica pronto, reinício com pedido pendente, limite de reinícios e janela. Cinco cenários à parte: sistema sem dispositivo de rede, com a rede degradada e o resto em uso, e quatro configurações recusadas sem nada aplicado: ausente, com dependência circular, com valor excessivo e inconsistente |
 | `test --suite system-journey` | Dois boots sobre o mesmo volume, operados pelo shell: arquivos, programas, `ping`, transferência por TCP gravada em arquivo, `sync`, parada com uma aplicação presa em uma conexão e reinício; o segundo boot confere os dados do primeiro e desliga |
+| `test --suite release-journey` | Primeira inicialização, atualização para uma imagem de boot de outra versão sobre o mesmo volume e volta à imagem anterior com os dados das duas. Dois cenários à parte: volume com o root mais novo danificado, que fica somente leitura, e volume em formato desconhecido, que não é montado nem alterado |
 | `fault-test --suite device-reset` | Dispositivo que para de responder: deadline do pedido, término do driver com IO pendente e reset que falha, sem devolver ao alocador a memória ainda exposta ao dispositivo |
 | `fault-test --suite storage-crash` | Estados que uma queda de energia deixaria no disco, com perda, corte e reordenação das escritas ainda sem flush: 66 pontos de crash em 11 transações, 1.000 sequências geradas a partir da seed 1 e o registro de escritas e flushes de um boot no QEMU. Cada estado precisa montar em um commit inteiro, com todo `sync` confirmado. A montagem roda no host, com o código de recuperação do convidado |
 | `fault-test --suite network-faults` | 31 espécimes de quadros malformados, de Ethernet a TCP, cada um contado pelo parser da sua camada; 32 pedidos de conexão forjados contra uma fila de aceitação; 1,5 s de enlace caído no meio de uma transferência; reset do dispositivo de rede; reinício do serviço com um cliente à espera |
@@ -117,6 +124,33 @@ Para volumes fora das suítes, `create-volume` grava um volume vazio em um arqui
 
 O `kernel-tool` termina com 0 em sucesso, 1 quando uma verificação falha, 2 em erro de uso e 3 quando a infraestrutura não está disponível, por exemplo uma ferramenta fixada que não pôde ser baixada ou executada.
 
+## Homologar e distribuir
+
+```sh
+uv run kernel-tool verify --all
+uv run kernel-tool repeat-boot --count 1000
+uv run kernel-tool benchmark
+uv run kernel-tool reproduce-build
+uv run kernel-tool fuzz --all --budget-hours 24
+uv run kernel-tool soak --hours 24
+uv run kernel-tool release-check
+```
+
+| Comando | O que faz |
+| --- | --- |
+| `verify --all` | Roda tudo o que a seção anterior lista, mais `verify-interfaces` e o replay do corpus de fuzzing, e grava um resultado por verificação. Uma verificação que não pôde rodar fica incompleta e não conta como sucesso |
+| `verify-interfaces` | Compara os arquivos das interfaces congeladas com os digests de `specs/frozen-interfaces.toml` |
+| `fuzz`, `replay-corpus` e `promote-corpus` | Mutam as entradas de boot, de interface, de armazenamento e de rede pelo tempo pedido para cada família; repetem as seeds, o corpus e as regressões; copiam para `tests/fuzz/corpus/` o que alcançou código novo |
+| `repeat-boot` | Inicia a imagem de release até o shell e desliga em ordem, o número de vezes pedido, com o resultado de cada boot |
+| `benchmark` | Mede boot, memória, IPC, resposta de tarefa pronta, pausas do coletor do supervisor e liberação após término, e compara com os budgets |
+| `soak` | Mantém um boot sob carga de processos, arquivos, rede e memória, e reprova crescimento persistente de recursos |
+| `reproduce-build` | Compila duas vezes em diretórios vazios e exige imagens iguais entre si e iguais às do build atual |
+| `release-check` | Avalia os doze gates de release e monta o pacote em `build/qemu-riscv64/release/`. Termina com status 1 enquanto algum gate estiver em aberto. Não publica, não cria tag e não usa chave |
+| `release-sign` e `release-verify` | Assinam os checksums de um pacote com uma chave de fora do repositório e conferem checksums e assinatura |
+| `install`, `update` e `rollback` | Instalam um pacote em um diretório com o seu volume de dados, trocam o release instalado e voltam ao anterior quando ele lê o formato do volume |
+
+Os relatórios de homologação ficam em `build/qemu-riscv64/qualification/` e em `build/fuzz/`. A sequência completa está em [Qualificar e montar um release](docs/operations/release-procedure.md), e o uso de um pacote em [Instalar, atualizar e recuperar](docs/operations/installation.md).
+
 ## Organização
 
 | Caminho | Conteúdo |
@@ -126,27 +160,31 @@ O `kernel-tool` termina com 0 em sucesso, 1 quando uma verificação falha, 2 em
 | `src/` | Python do convidado: `kernel_protocol`, `kernel_core`, `kernel_client`, `kernel_drivers`, `kernel_services` e `kernel_apps`, com o shell e o runner de aplicações |
 | `apps/` | Programas que a imagem de boot leva em `apps/` |
 | `host/kernel_tool/` | Ferramenta de build, execução e verificação |
-| `tests/` | Testes do host, corpus de conformidade, testes nativos hospedados, autoteste do convidado, programas adversariais das suítes e corpus de volumes |
+| `tests/` | Testes do host, corpus de conformidade, testes nativos hospedados, autoteste do convidado, programas adversariais das suítes, corpus de volumes e, em `tests/fuzz/`, os alvos nativos e o corpus de fuzzing |
 | `specs/abi/` | Handles, erros, syscalls, capabilities, mensagens, buffers, processos, dispositivos, serviços de dispositivo, imagem de usuário e perfil de recursos |
 | `specs/filesystem/` | Formato do volume, imagem de boot e protocolo do serviço de arquivos |
 | `specs/network/` | Protocolos suportados e serviço de sockets |
 | `specs/system/` | Configuração, gerente e serviço de controle, aplicações |
+| `specs/compatibility.md` e `specs/frozen-interfaces.toml` | Política de compatibilidade e digests das interfaces congeladas |
 | `config/boot/` | Manifesto dos arquivos da imagem de boot |
 | `config/system/` | Configuração do sistema que vai na imagem de boot |
 | `config/profiles/` | Máquina, layout de memória, limites e deadlines de cada perfil |
+| `config/release/` | Revisão dos avisos de segurança de cada componente fixado |
 | `docs/` | Decisões de arquitetura, requisitos, conformidade, segurança, operação e registros de aceite |
 
 ## Documentação
 
 - [Operar o sistema](docs/operations/system-operation.md), [operar a rede](docs/operations/network-operation.md) e [serviços e configuração](docs/operations/services-and-configuration.md)
 - [Matriz de requisitos](docs/architecture/requirements.md) e [matriz de conformidade das APIs públicas](docs/architecture/api-conformance.md)
-- [Registro de aceite da rede e do ambiente operacional](docs/acceptance/network-and-operational-environment.md)
+- [Registro de aceite da rede e do ambiente operacional](docs/acceptance/network-and-operational-environment.md) e [registro de homologação](docs/acceptance/qualification-and-distribution.md)
+- [Instalar, atualizar e recuperar](docs/operations/installation.md), [qualificar e montar um release](docs/operations/release-procedure.md) e [diagnóstico](docs/operations/diagnostics.md)
+- [Política de compatibilidade](specs/compatibility.md)
 - [Diferenças entre CPython e o runtime do convidado](docs/architecture/runtime-differences.md)
 - [Decisões de arquitetura](docs/decisions/)
 - [Formato do volume](specs/filesystem/volume-format.md), [imagem de boot](specs/filesystem/boot-image.md) e [serviço de arquivos](specs/filesystem/file-service.md)
 - [Protocolos de rede](specs/network/protocols.md) e [serviço de sockets](specs/network/socket-service.md)
 - [Configuração do sistema](specs/system/configuration.md), [gerente e serviço de controle](specs/system/control-service.md) e [aplicações](specs/system/applications.md)
-- [Modelo de ameaças](docs/security/threat-model.md) e [base computacional confiável](docs/security/trusted-computing-base.md)
+- [Modelo de ameaças](docs/security/threat-model.md), [base computacional confiável](docs/security/trusted-computing-base.md), [revisão da fronteira privilegiada](docs/security/privileged-boundary-review.md) e [resposta a vulnerabilidades](docs/security/vulnerability-response.md)
 - [Máquina de referência, workload e budgets](docs/operations/reference-machine.md)
 - [Integração contínua](docs/operations/continuous-integration.md)
 

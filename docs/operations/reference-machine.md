@@ -19,9 +19,9 @@ A fonte desses valores é `config/profiles/qemu-riscv64.toml`. O ADR 0001 explic
 
 ## Host das medições
 
-As primeiras medições vieram de um host Linux x86_64 com 2 vCPUs Intel Xeon de 2,5 GHz e 4 GiB de RAM, sem aceleração de hardware para o convidado. A linha de base com dispositivos e volume persistente veio de um host com 2 vCPUs Intel Xeon de 2,9 GHz e 4 GiB de RAM. A linha de base com rede e ambiente operacional veio de um host com a mesma configuração e Linux 6.18, cuja pilha TCP/IP é o peer das suítes de rede. Toda medição nova registra o host junto.
+As primeiras medições vieram de um host Linux x86_64 com 2 vCPUs Intel Xeon de 2,5 GHz e 4 GiB de RAM, sem aceleração de hardware para o convidado. A linha de base com dispositivos e volume persistente veio de um host com 2 vCPUs Intel Xeon de 2,9 GHz e 4 GiB de RAM. A linha de base com rede e ambiente operacional veio de um host com a mesma configuração e Linux 6.18, cuja pilha TCP/IP é o peer das suítes de rede. A linha de base da homologação veio de um host com essa mesma configuração. Toda medição nova registra o host junto.
 
-O tempo é o do host, medido pelo `kernel-tool` em volta de cada execução do QEMU, e inclui a inicialização do emulador e do OpenSBI. O convidado lê o próprio tempo monotônico no contador `time`, com a frequência que o DTB informa, e o usa para quantum e deadlines. Esse tempo não entra nas medidas desta página.
+O tempo é o do host, medido pelo `kernel-tool` em volta de cada execução do QEMU, e inclui a inicialização do emulador e do OpenSBI. O convidado lê o próprio tempo monotônico no contador `time`, com a frequência que o DTB informa, e o usa para quantum e deadlines. As latências dos budgets de desempenho são medidas com esse tempo, e as outras medidas desta página com o do host.
 
 ## Workload de referência
 
@@ -41,6 +41,13 @@ As suítes do `kernel-tool test`:
 - `supervision`: cinco casos sobre um conjunto de serviços de teste, um boot sem dispositivo de rede e quatro boots com configurações recusadas.
 - `system-journey`: dois boots sobre o mesmo volume de dados, com 28 e 7 comandos digitados no shell e uma transferência de 6240 bytes por TCP gravada em arquivo.
 - `fault-test --suite network-faults`: 31 espécimes malformados em 32 quadros, 32 pedidos de conexão forjados, 1,5 s de enlace caído, um reset do dispositivo de rede e um reinício do serviço com um cliente à espera.
+- `release-journey`: cinco boots. Três usam o mesmo volume de dados: a primeira inicialização, um boot com a imagem de boot de outra versão e a volta à imagem anterior. Os outros dois usam volumes preparados, um com o root mais novo danificado e outro em formato desconhecido.
+- `repeat-boot`: o cenário `boot-to-shell`, um boot da imagem de release com um volume válido e a rede isolada, até o shell aceitar `shutdown`.
+- `benchmark`, cenário `guest-measurements`: 10.000 chamadas a um processo de echo e 50 términos, cada um medido do `kill` até os frames do processo voltarem a ficar livres.
+- `benchmark`, cenário `process-churn`: o cenário `cycles`, com o rastreio do coletor do supervisor ligado.
+- `benchmark`, cenário `system-measurements`: uma sessão pelo shell. `mem` com o sistema em repouso. Depois quatro `spin.py`, presos ao processador, dois `chatter.py`, que regravam e releem um arquivo de 960 bytes, um em `tmp` e outro em `data`, e `latency.py`, que espera 400 vezes por um prazo de 5 ms e mede o atraso depois dele. Por fim quatro `ballast.py`, cada um com 1.280 KiB no heap, e `mem` de novo.
+- `soak`: um único boot, com as rodadas descritas em `release-procedure.md`.
+- `fuzz`: os 14 alvos das famílias `boot`, `interface`, `storage` e `network`, a partir das seeds de cada alvo e de `tests/fuzz/corpus/`.
 
 ## Budgets iniciais
 
@@ -80,6 +87,23 @@ São limites que reprovam o teste quando estourados. Não são resultados medido
 | Linha do shell | 255 bytes e 16 palavras | Shell, antes de executar o comando |
 
 Os demais limites do perfil estão em `specs/abi/resource-profile.md`. Os de dispositivos e de arquivos estão em `specs/abi/devices.md` e em `specs/filesystem/`, os de rede em `specs/network/protocols.md` e os do sistema em `specs/system/configuration.md`.
+
+## Budgets de desempenho
+
+São os limites que `kernel-tool benchmark` aplica às imagens de release. O gate `budgets` reprova o release quando um deles é estourado ou não foi medido. Os valores medidos estão na linha de base da homologação, no fim desta página.
+
+| Métrica | Budget | Como é medida |
+| --- | --- | --- |
+| Boot até o shell pronto e a parada em ordem | 15 s | Relógio do host, do início do emulador ao fim da parada, com a imagem de release, um volume válido e a rede isolada |
+| Memória comprometida em repouso | 96 MiB | Memória da máquina menos os frames livres, com os serviços obrigatórios e o shell à espera |
+| Memória comprometida sob carga | 224 MiB | A mesma conta, com as quatro vagas de aplicação ocupadas e cada heap preenchido |
+| Round-trip de IPC pequeno | p99 de 25 ms | Relógio do convidado, 10.000 chamadas a um processo de echo, sem disco e sem rede |
+| Resposta de tarefa pronta | p99 de 250 ms | Relógio do convidado, atraso depois do prazo de um timer, com os serviços obrigatórios, quatro aplicações presas ao processador e duas a arquivos |
+| Pausa do coletor do supervisor | p99 de 25 ms e máximo de 100 ms | Histograma mantido pelo supervisor, lido na sessão sob carga |
+| Liberação após término | Máximo de 1 s | Relógio do convidado, do `kill` de um processo até os frames dele voltarem a ficar livres |
+| Crescimento de recursos vivos | Nenhuma piora persistente depois do aquecimento | Cenário `cycles` e `kernel-tool soak` |
+
+Mudar um desses budgets pede um ADR e uma nova linha de base.
 
 ## Primeira linha de base
 
@@ -184,6 +208,53 @@ Medida em um diretório de build vazio, em um host Linux 6.18 x86_64 com 2 vCPUs
 | `boot.img` | 65.536 bytes |
 
 Os hashes das imagens e o inventário de ferramentas ficam nos relatórios `bootstrap.json` e `artifacts.json`. Eles mudam a cada commit e por isso não são copiados para cá.
+
+## Linha de base da homologação
+
+Medida em um diretório de build vazio, em um host Linux 6.18 x86_64 com 2 vCPUs Intel Xeon de 2,9 GHz e 4 GiB de RAM, sobre as imagens da versão `1.0.0rc1`. A execução inteira, com os gates de release, está em `docs/acceptance/qualification-and-distribution.md`.
+
+| Medida | Valor |
+| --- | --- |
+| Cenário `boot` | 0,7 s para as três execuções |
+| Cenário `runtime-selftest` | 35,0 s |
+| Cenário `runtime-trap` | 2,6 s |
+| Cada um dos outros cenários de falha | 0,1 s |
+| Suítes `memory`, `capabilities` e `ipc` | 0,6 s, 0,2 s e 0,5 s |
+| Suíte `processes`, cenários `cases` e `spawn-failures` | 1,5 s e 0,3 s |
+| Cenário `cycles` | 61,5 s |
+| Suíte `scheduling`, cenários `cases` e `schedule-trace` | 1,2 s e 0,1 s |
+| Suíte `devices`, cenários `cases`, `services` e `without-entropy` | 0,1 s, 0,4 s e 0,2 s |
+| Suíte `vfs` | 1,6 s |
+| Suíte `storage`, cenário `cases` | 3,0 s |
+| Suíte `storage`, cenários `persistence-write` e `persistence-verify` | 0,4 s cada |
+| Suíte `storage`, cada um dos outros cinco cenários | 0,2 s |
+| Suíte `network` | 12,9 s |
+| Suíte `network-interop`, cenários `interop-clean-link` e `interop-impaired-link` | 2,4 s e 4,2 s |
+| Suíte `applications` | 4,9 s |
+| Suíte `supervision`, cenário `supervision-cases` | 2,3 s |
+| Suíte `supervision`, cenário `network-absent` | 0,3 s |
+| Suíte `supervision`, cada um dos quatro cenários de configuração recusada | 0,2 s |
+| Suíte `system-journey`, primeiro e segundo boot | 3,4 s e 0,5 s |
+| Suíte `release-journey`, cada um dos cinco cenários | De 0,4 s a 0,5 s |
+| `fault-test --suite device-reset`, cenário `stalled-device` | 7,2 s |
+| `fault-test --suite storage-crash`, cenário `flush-trace` | 0,6 s |
+| `fault-test --suite network-faults` | 2,5 s |
+| `repeat-boot`, cada um dos 1.000 boots | Mínimo de 0,27 s, mediana de 0,29 s, p99 de 0,38 s e máximo de 0,46 s |
+| Boot até o shell pronto e a parada em ordem | 0,46 s, para um budget de 15 s |
+| Memória comprometida em repouso | 22,9 MiB, para um budget de 96 MiB |
+| Memória comprometida sob carga | 31,2 MiB, para um budget de 224 MiB |
+| Round-trip de IPC pequeno | p50 de 0,91 ms, p99 de 1,63 ms e máximo de 2,03 ms em 10.000 chamadas, para um budget de 25 ms no p99 |
+| Resposta de tarefa pronta | p50 de 33,1 ms, p99 de 80,0 ms e máximo de 82,5 ms em 400 amostras, para um budget de 250 ms no p99 |
+| Pausa do coletor do supervisor | p99 e máximo de 2,72 ms em 3 coletas, para budgets de 25 ms e 100 ms |
+| Liberação após término | p50 de 0,71 ms e máximo de 1,07 ms em 50 términos, para um budget de 1 s |
+| Build completo | 34 s |
+| `kernel.elf` | 1.643.184 bytes no arquivo. Segmentos carregáveis: 116.812 bytes de código, 77.592 de dados somente leitura e 1.046.368 sem conteúdo no arquivo, das tabelas estáticas do supervisor |
+| `kernel-selftest.elf` | 1.740.744 bytes no arquivo |
+| `init.img` | 431.655 bytes |
+| `tests.img` | 626.047 bytes |
+| `boot.img` | 65.536 bytes |
+
+As pausas do coletor vêm de poucas coletas, e por isso o p99 e o máximo coincidem. As medidas de boot são do relógio do host, e as de IPC, de resposta e de liberação são do relógio do convidado.
 
 ## Regras
 

@@ -31,7 +31,7 @@ Instalar, atualizar e voltar são operações sobre um diretório com as imagens
 ## Consequências
 
 - Qualquer mudança em código que entra nas imagens invalida a evidência longa. A correção de uma falha achada no fim da qualificação custa a qualificação de novo.
-- A qualificação completa não cabe em um runner hospedado do GitHub, que encerra um job em seis horas. O fuzzing acumula em sessões agendadas; o soak de 24 horas pede uma máquina própria.
+- A qualificação completa não cabe em um runner hospedado do GitHub, que encerra um job em seis horas. O fuzzing pode acumular em várias sessões, na máquina de quem prepara o release; o soak de 24 horas pede uma máquina que fique ligada esse tempo.
 - O motor de fuzzing é mais simples que um fuzzer dedicado: não tem dicionários por formato nem cobertura por aresta. Ausência de falhas com ele diz menos do que diria com uma ferramenta madura.
 - O gate de dependências depende de uma revisão manual registrada em arquivo. Ele garante que a revisão acompanha a versão fixada, não que a revisão está certa.
 

@@ -27,6 +27,8 @@ uv run kernel-tool release-check --profile qemu-riscv64
 
 `verify --area <área>` roda uma parte da matriz. Uma execução parcial não satisfaz o gate de correção.
 
+Rode um comando de cada vez sobre um diretório de build. Os que iniciam o QEMU usam os mesmos volumes de cenário, e dois ao mesmo tempo disputam esses arquivos: um deles termina com status 3, e o relatório dele fica incompleto.
+
 ## Fuzzing
 
 As famílias são `boot`, `interface`, `storage` e `network`. Os alvos nativos são compilados para o host com AddressSanitizer, UndefinedBehaviorSanitizer e cobertura por bloco; os alvos Python rodam o código do convidado em CPython com cobertura por linha. Um alvo falha por crash, por travar ou por quebrar um invariante que o próprio alvo confere.
