@@ -14,6 +14,7 @@ from kernel_tool.commands import (
     fault_test,
     fuzz,
     interfaces,
+    release,
     reproduce,
     soak,
     storage,
@@ -40,6 +41,7 @@ REGISTRARS = (
     artifacts.register,
     reproduce.register,
     interfaces.register,
+    release.register,
 )
 
 logger = logging.getLogger("kernel_tool")
