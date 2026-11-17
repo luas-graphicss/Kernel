@@ -16,7 +16,7 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 90
     env:
       UV_FROZEN: "1"
     steps:
@@ -52,11 +52,20 @@ jobs:
       - name: Run host and conformance tests
         run: uv run pytest tests/host tests/conformance
 
+      - name: Compare the frozen interfaces with their recorded digests
+        run: uv run kernel-tool verify-interfaces
+
       - name: Fetch and verify the toolchain
         run: sh .github/scripts/classify-exit.sh uv run kernel-tool toolchain
 
       - name: Run hosted native tests and static analysis
         run: sh .github/scripts/classify-exit.sh uv run kernel-tool native-check --profile qemu-riscv64
+
+      - name: Replay the fuzzing seeds, corpus and regressions
+        run: sh .github/scripts/classify-exit.sh uv run kernel-tool replay-corpus --all
+
+      - name: Fuzz every input family briefly
+        run: sh .github/scripts/classify-exit.sh uv run kernel-tool fuzz --all --budget-hours 0.05
 
       - name: Build the images
         run: sh .github/scripts/classify-exit.sh uv run kernel-tool build --profile qemu-riscv64
@@ -106,6 +115,15 @@ jobs:
       - name: Install, update and roll back over one volume and refuse unreadable volumes
         run: sh .github/scripts/classify-exit.sh uv run kernel-tool test --profile qemu-riscv64 --suite release-journey
 
+      - name: Boot the release image repeatedly
+        run: sh .github/scripts/classify-exit.sh uv run kernel-tool repeat-boot --profile qemu-riscv64 --count 25
+
+      - name: Measure boot, memory, latency and collector pauses against the budgets
+        run: sh .github/scripts/classify-exit.sh uv run kernel-tool benchmark --profile qemu-riscv64
+
+      - name: Keep one boot under mixed load briefly
+        run: sh .github/scripts/classify-exit.sh uv run kernel-tool soak --profile qemu-riscv64 --hours 0.05
+
       - name: Stall a device and fail its reset
         run: sh .github/scripts/classify-exit.sh uv run kernel-tool fault-test --profile qemu-riscv64 --suite device-reset
 
@@ -118,13 +136,20 @@ jobs:
       - name: Verify the volume image corpus
         run: sh .github/scripts/classify-exit.sh uv run kernel-tool verify-filesystem --corpus tests/faults/storage
 
-      - name: Verify and reproduce the images
-        run: sh .github/scripts/classify-exit.sh uv run kernel-tool verify-artifacts --profile qemu-riscv64 --reproduce
+      - name: Verify the images
+        run: sh .github/scripts/classify-exit.sh uv run kernel-tool verify-artifacts --profile qemu-riscv64
+
+      - name: Build twice from nothing and require identical images
+        run: sh .github/scripts/classify-exit.sh uv run kernel-tool reproduce-build --profile qemu-riscv64
 
       - name: Upload the reports
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: reports
-          path: build/qemu-riscv64/reports/
+          path: |
+            build/qemu-riscv64/reports/
+            build/qemu-riscv64/qualification/
+            build/fuzz/report.json
+            build/fuzz/findings/
           if-no-files-found: warn

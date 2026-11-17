@@ -6,16 +6,21 @@ O workflow `.github/workflows/ci.yml` roda em cada pull request e em cada push p
 
 1. `uv sync --frozen`
 2. `ruff format --check`, `ruff check`, `mypy --strict host src` e `pytest tests/host tests/conformance`
-3. `kernel-tool toolchain`
-4. `kernel-tool native-check`
-5. `kernel-tool build`
-6. `kernel-tool test --suite bootstrap`
-7. `kernel-tool test` com as suítes `memory`, `processes`, `capabilities`, `ipc`, `scheduling`, `devices`, `vfs`, `storage`, `network`, `network-interop`, `applications`, `supervision` e `system-journey`, uma etapa para cada
-8. `kernel-tool fault-test` com as suítes `device-reset`, `storage-crash` e `network-faults`, uma etapa para cada. A segunda roda as 1.000 sequências padrão, a partir da seed 1
-9. `kernel-tool verify-filesystem --corpus tests/faults/storage`
-10. `kernel-tool verify-artifacts --reproduce`
+3. `kernel-tool verify-interfaces`
+4. `kernel-tool toolchain`
+5. `kernel-tool native-check`
+6. `kernel-tool replay-corpus --all` e `kernel-tool fuzz --all --budget-hours 0.05`, que dá três minutos a cada família
+7. `kernel-tool build`
+8. `kernel-tool test --suite bootstrap`
+9. `kernel-tool test` com as suítes `memory`, `processes`, `capabilities`, `ipc`, `scheduling`, `devices`, `vfs`, `storage`, `network`, `network-interop`, `applications`, `supervision`, `system-journey` e `release-journey`, uma etapa para cada
+10. `kernel-tool repeat-boot --count 25`, `kernel-tool benchmark` e `kernel-tool soak --hours 0.05`
+11. `kernel-tool fault-test` com as suítes `device-reset`, `storage-crash` e `network-faults`, uma etapa para cada. A segunda roda as 1.000 sequências padrão, a partir da seed 1
+12. `kernel-tool verify-filesystem --corpus tests/faults/storage`
+13. `kernel-tool verify-artifacts` e `kernel-tool reproduce-build`
 
-Nenhuma etapa é opcional e nenhuma usa `continue-on-error`. Os relatórios de `build/qemu-riscv64/reports/` são anexados ao run mesmo quando uma etapa falha. As capturas de tráfego das suítes de rede vão junto, em `reports/captures/`.
+Nenhuma etapa é opcional e nenhuma usa `continue-on-error`. Os relatórios de `build/qemu-riscv64/reports/` e de `build/qemu-riscv64/qualification/`, o `build/fuzz/report.json` e as falhas de `build/fuzz/findings/` são anexados ao run mesmo quando uma etapa falha. As capturas de tráfego das suítes de rede vão junto, em `reports/captures/`.
+
+O workflow não homologa um release. As etapas 6 e 10 rodam versões curtas do fuzzing, do boot repetido e do soak, para que uma regressão apareça no pull request. Os gates de 1.000 boots, de 24 horas de soak e de 24 horas de fuzzing por família não cabem no limite de tempo de um job e rodam na máquina de quem prepara o release, como descreve `release-procedure.md`. O workflow também não roda `release-check`: sem esses gates ele terminaria sempre com falha.
 
 `tests/host/test_ci_workflow.py` lê o workflow e reprova quando uma suíte registrada no `kernel-tool`, de cenários ou de falhas, não tem exatamente uma etapa, ou quando alguma etapa usa `continue-on-error`. Uma suíte nova entra no `kernel-tool` e no workflow na mesma mudança.
 
