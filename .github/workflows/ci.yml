@@ -103,6 +103,9 @@ jobs:
       - name: Operate the system through the shell across a restart
         run: sh .github/scripts/classify-exit.sh uv run kernel-tool test --profile qemu-riscv64 --suite system-journey
 
+      - name: Install, update and roll back over one volume and refuse unreadable volumes
+        run: sh .github/scripts/classify-exit.sh uv run kernel-tool test --profile qemu-riscv64 --suite release-journey
+
       - name: Stall a device and fail its reset
         run: sh .github/scripts/classify-exit.sh uv run kernel-tool fault-test --profile qemu-riscv64 --suite device-reset
 
