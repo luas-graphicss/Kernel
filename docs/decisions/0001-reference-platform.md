@@ -1,5 +1,7 @@
 # ADR 0001: Plataforma de referência
 
+[English](0001-reference-platform.en.md)
+
 Estado: aceita.
 
 ## Contexto

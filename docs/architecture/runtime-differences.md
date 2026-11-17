@@ -1,5 +1,7 @@
 # Diferenças entre CPython e o runtime do convidado
 
+[English](runtime-differences.en.md)
+
 O código de `src/` e o corpus de `tests/conformance/corpus/` rodam em dois interpretadores: CPython 3.13 no host, que serve de referência, e MicroPython 1.29.0 no convidado. Este documento lista as diferenças aceitas entre os dois e a regra que o código compartilhado segue para não depender delas.
 
 ## O que não pode diferir
@@ -16,6 +18,7 @@ O resultado dos contratos compartilhados. O cenário `runtime-selftest` executa 
 | Anotações de tipo | Descartadas pelo `mpy-cross`, nunca avaliadas | As anotações usam tipos embutidos e classes do projeto. Sem `typing`, não há `Protocol`, `TypeVar` nem genéricos próprios |
 | Código externo | Sem carga de `.mpy`, e `sys.path` contém só `.frozen`: nenhum módulo é importado de um arquivo. `compile`, `open` e `input` não existem. O perfil `supervisor` não tem compilador. O perfil `user` tem, com `exec` e `eval`, e é com ele que o runner executa o arquivo de uma aplicação | Todo módulo do convidado entra congelado no build. Um programa de aplicação é um arquivo só e importa apenas módulos congelados |
 | f-strings | Suportadas no perfil `user`, pelo compilador do processo. Os módulos congelados são compilados no build pelo `mpy-cross` | Sem restrição |
+| Formatação com `%` | `str` não tem o operador `%`: `'F%05d' % 7` levanta `TypeError`. `'{:05d}'.format(7)` e `f'{7:05d}'` devolvem `00007` | Formatar com f-strings ou com `str.format` |
 | Exceções | Os mesmos tipos embutidos nos casos cobertos pelo autoteste; mensagens e traceback têm outro formato | Comparar o tipo e os campos próprios, como o código de `KernelError`. Nunca o texto da mensagem |
 | Recursão profunda | `RuntimeError`, pela checagem de stack. Não existe `RecursionError` | Capturar `RuntimeError` quando o limite importar |
 | Coleta de memória | Mark and sweep, sem contagem de referências; finalizadores desligados | Não depender de `__del__` nem do momento em que a memória é liberada |

@@ -1,5 +1,7 @@
 # Dispositivos
 
+[English](devices.en.md)
+
 O supervisor descobre os dispositivos no DTB, é o único que toca os registradores e as filas, e entrega cada dispositivo a um driver em U-mode por capability. O driver decide que pedido fazer. O supervisor valida o pedido e escreve ele mesmo os endereços físicos que o dispositivo vai ler. As decisões estão no ADR 0008.
 
 ## Descoberta

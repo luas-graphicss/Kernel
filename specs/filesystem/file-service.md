@@ -1,5 +1,7 @@
 # Serviço de arquivos
 
+[English](file-service.en.md)
+
 O serviço de arquivos é um processo em U-mode, `kernel_services.filesystem.main`. Ele monta os volumes, resolve caminhos e entrega arquivos e diretórios por mensagens de IPC. Um cliente só alcança o que está abaixo da raiz do namespace que recebeu.
 
 As mensagens seguem `specs/abi/messages.md`. Os números de operação e os formatos estão em `kernel_protocol.services.files`, e a biblioteca cliente em `kernel_client.files`.

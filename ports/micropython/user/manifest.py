@@ -86,6 +86,7 @@ package(
         "block/service.py",
         "console/__init__.py",
         "console/discipline.py",
+        "console/escapes.py",
         "console/main.py",
         "console/service.py",
         "echo/__init__.py",

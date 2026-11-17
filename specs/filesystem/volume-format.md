@@ -1,5 +1,7 @@
 # Formato do volume persistente
 
+[English](volume-format.en.md)
+
 Formato versão 1. Um volume é uma sequência de blocos de 4096 bytes em um dispositivo de blocos. Dados e metadados são copy-on-write: uma transação nunca sobrescreve um bloco que um root protegido ainda alcança. As decisões estão no ADR 0006 e a implementação em `src/kernel_services/filesystem/`.
 
 Os inteiros são little-endian e sem sinal. Todo checksum é o CRC-32 do `zlib`.

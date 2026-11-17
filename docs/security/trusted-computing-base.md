@@ -1,5 +1,7 @@
 # Base computacional confiável
 
+[English](trusted-computing-base.en.md)
+
 Lista o que precisa estar correto para as garantias do kernel valerem. Um defeito em qualquer item abaixo pode violar isolamento ou integridade.
 
 ## Em execução

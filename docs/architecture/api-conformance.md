@@ -1,5 +1,7 @@
 # Matriz de conformidade das APIs públicas
 
+[English](api-conformance.en.md)
+
 Cada linha é uma operação que o sistema oferece a um processo, a um programa ou a quem opera o console, com o estado dela e o teste que a exercita no convidado. O que não tem linha aqui não é suportado. A última seção lista o que mais se costuma esperar de um sistema e não existe neste.
 
 A matriz de requisitos, em `requirements.md`, diz o que o projeto precisa entregar. Esta página diz o que cada interface faz hoje e onde isso é conferido.
@@ -242,7 +244,7 @@ Descrito em `docs/operations/system-operation.md`. Todo comando termina com uma 
 | `ping` | Suportado | `system-journey/journey-first-boot` |
 | `shutdown` | Suportado | `system-journey/journey-first-boot`, `system-journey/journey-second-boot` |
 
-A divisão da linha em palavras e os limites dela são conferidos em `tests/conformance/test_shell_words.py`.
+A divisão da linha em palavras e os limites dela são conferidos em `tests/conformance/test_shell_words.py`. A recusa de uma linha que passou do limite do console está em `tests/conformance/test_shell_interpreter.py`, e a limpeza de um `write` recusado em `tests/conformance/test_shell_write.py`.
 
 ## Fora do suportado
 

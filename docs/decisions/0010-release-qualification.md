@@ -1,5 +1,7 @@
 # ADR 0010: Homologação e distribuição
 
+[English](0010-release-qualification.en.md)
+
 Estado: aceita.
 
 ## Contexto
@@ -10,7 +12,7 @@ Parte dessa evidência leva dias de máquina. Era preciso decidir como ela se li
 
 ## Decisão
 
-A evidência pertence a imagens, não a um commit. Cada comando de qualificação grava o SHA-256 de `kernel.elf`, `init.img` e `boot.img`, e `release-check` recusa um relatório de outras imagens. Como o build é reprodutível, a evidência produzida em uma máquina vale para as mesmas imagens compiladas em outra.
+A evidência pertence a imagens, não a um commit. Cada comando de qualificação grava o SHA-256 de `kernel.elf`, `init.img` e `boot.img`, e `release-check` recusa um relatório de outras imagens. As imagens não dependem de onde ficam a árvore, o diretório de build, o fonte do MicroPython e o compilador: a compilação troca os quatro caminhos por nomes fixos, e `verify-artifacts` reprova uma imagem que traga algum deles. Por isso a evidência produzida em uma máquina vale para as mesmas imagens compiladas em outra.
 
 Um gate em aberto reprova. `release-check` monta o pacote de qualquer forma, para que a instalação possa ser ensaiada, mas grava `"qualified": false` no manifesto e termina com status diferente de zero. `release-sign` não assina um pacote assim sem `--rehearsal`. Não existe opção para dispensar um gate.
 

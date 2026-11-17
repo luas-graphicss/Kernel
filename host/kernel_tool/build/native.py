@@ -1,16 +1,18 @@
 import os
-import shutil
 import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-from kernel_tool.outcome import CheckError, InfrastructureError
+from kernel_tool.build.preflight import require_host_compilers, require_paths_without_whitespace
+from kernel_tool.outcome import CheckError
 from kernel_tool.profiles.model import Profile
 from kernel_tool.storage.boot_image import write_boot_image
+from kernel_tool.toolchain.host_tools import locate_host_tool
 from kernel_tool.toolchain.resolve import Toolchain
 from kernel_tool.workspace import Workspace
 
+MAKE = "make"
 BUILD_GOAL = "all"
 ANALYSIS_GOAL = "analyze"
 LINK_MAP_SUFFIX = ".map"
@@ -116,14 +118,14 @@ def run_make(
     goal: str,
     directory: Path | None = None,
 ) -> None:
-    make = shutil.which("make")
-    if make is None:
-        raise InfrastructureError("required host tool 'make' is not installed")
-
     outputs = build_outputs(workspace, profile, directory)
+    require_paths_without_whitespace(workspace, outputs.directory)
+    make = locate_host_tool(MAKE)
+    require_host_compilers()
+
     variables = make_variables(profile, toolchain, outputs.directory)
     command = [
-        make,
+        str(make),
         "--no-print-directory",
         "-C",
         str(workspace.root),

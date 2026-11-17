@@ -1,5 +1,7 @@
 # Máquina de referência, workload e budgets iniciais
 
+[English](reference-machine.en.md)
+
 Define onde e com que carga as medições do projeto são feitas, e os limites que os testes aplicam hoje. Resultados obtidos com TCG não são extrapolados para hardware físico.
 
 ## Máquina de referência
@@ -74,7 +76,7 @@ São limites que reprovam o teste quando estourados. Não são resultados medido
 | Escrita de depuração | 256 bytes por chamada | Chamada `debug write` |
 | Transportes VirtIO | 8 | Inventário dos dispositivos do DTB |
 | Pedidos em andamento por dispositivo | 4, de até 4 segmentos cada | Fila de pedidos do supervisor |
-| Entrada do console | 256 bytes em espera e linhas de até 255 bytes | Porta serial do supervisor e disciplina de linha |
+| Entrada do console | 256 bytes em espera, linhas de até 255 bytes e 4 linhas completas em espera | Porta serial do supervisor e disciplina de linha |
 | Caminho | 1024 bytes, 32 componentes e nomes de até 255 bytes | Serviço de arquivos, antes de consultar o volume |
 | Volume persistente | De 8 a 65.536 blocos de 4096 bytes | Verificação na montagem |
 | Imagem de boot | 64 arquivos de até 256 KiB | Validação da imagem na montagem |

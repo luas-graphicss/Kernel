@@ -1,5 +1,7 @@
 # Matriz de requisitos
 
+[English](requirements.en.md)
+
 Cada requisito tem a fase em que é entregue pela primeira vez e a evidência que permite marcá-lo como aceito. Sem a evidência, o requisito continua aberto.
 
 Esta página fala de requisitos. O estado de cada syscall, de cada operação de serviço e de cada comando do shell, com o caso de teste que o exercita, está em `api-conformance.md`. Os resultados das execuções de aceite ficam em `docs/acceptance/`.
@@ -13,7 +15,7 @@ Esta página fala de requisitos. O estado de cada syscall, de cada operação de
 | R-05 | Os contratos compartilhados se comportam igual em CPython e no MicroPython alvo | 1, corpus completo na 5 | Digests das 10.000 transições do corpus comparados no cenário `runtime-selftest`, e `pytest tests/conformance` em CPython. Os dois rodam em `kernel-tool verify --all`; diferenças aceitas em `runtime-differences.md` |
 | R-06 | O DTB é validado com limites antes de qualquer uso | 1, dispositivos na 3 | `kernel-tool native-check`, com `device_tree_test.c` e `device_inventory_test.c`; cenários `device-tree-too-large` e `device-tree-without-memory` |
 | R-07 | Falha de boot e trap inesperada produzem diagnóstico e status final | 1 | Cenários `insufficient-memory`, `incompatible-segment`, `user-fault` e `supervisor-trap` |
-| R-08 | Um ambiente limpo reproduz a imagem a partir de versões e hashes registrados | 1, encerramento na 5 | `kernel-tool reproduce-build`: dois builds em diretórios vazios, iguais entre si e ao build atual, com o resultado em `qualification/reproduction.json`; `kernel-tool verify-artifacts --reproduce` |
+| R-08 | Um ambiente limpo reproduz a imagem a partir de versões e hashes registrados | 1, encerramento na 5 | `kernel-tool reproduce-build`: dois builds em diretórios vazios, iguais entre si e ao build atual, com o resultado em `qualification/reproduction.json`; `kernel-tool verify-artifacts --reproduce`, que também reprova uma imagem com o caminho de um diretório da árvore, do build ou da toolchain |
 | R-09 | Identidade geracional: um handle liberado nunca volta a valer | 1 no modelo, 2 no supervisor | `tests/conformance`, 10.000 transições com invariantes; `tests/native/object_table_test.c` e `capability_test.c`; suíte `capabilities` |
 | R-10 | Seleção de processos por prioridade, round-robin e aging | 1 no modelo, 2 com preempção | `tests/conformance`; suíte `scheduling`, com o trace de escalonamento do boot |
 | R-11 | Contabilização atômica de recursos por processo e global | 1 no modelo, 2 no supervisor | `tests/conformance`; cotas nas suítes `memory` e `capabilities`; cenários `spawn-failures` e `cycles` da suíte `processes` |

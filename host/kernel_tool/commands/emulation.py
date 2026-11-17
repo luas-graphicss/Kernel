@@ -1,5 +1,6 @@
 import argparse
 import logging
+import sys
 from contextlib import ExitStack
 from dataclasses import dataclass
 from pathlib import Path
@@ -18,6 +19,7 @@ from kernel_tool.profiles.model import Profile
 from kernel_tool.qemu.command import BootRequest, boot_command
 from kernel_tool.qemu.console import run_attached
 from kernel_tool.qemu.drives import Drive, FileDrive
+from kernel_tool.qemu.input_relay import HeldInput
 from kernel_tool.qemu.session import SessionResult
 from kernel_tool.release.installation import open_installation
 from kernel_tool.scenarios.disks import BOOT_IDENTITY, DATA_BLOCKS, DATA_IDENTITY, DATA_VOLUME
@@ -31,6 +33,7 @@ SYSTEM_DIRECTORY = "system"
 DATA_IMAGE = "data.img"
 NETWORK_DIRECTORY = "network"
 RESTART_REQUESTED = "kernel: power=restart"
+SHELL_READY = b"shell: ready"
 
 KERNEL_FILE = "kernel.elf"
 INIT_FILE = "init.img"
@@ -80,6 +83,7 @@ def run_system(workspace: Workspace, options: argparse.Namespace) -> ExitCode:
     drives = system_drives(system.boot_image, system.directory)
     deadline: float | None = options.deadline
     without_network: bool = options.without_network
+    held_input = redirected_input()
 
     with ExitStack() as stack:
         link = None if without_network else attach_network(stack, system.directory)
@@ -94,12 +98,21 @@ def run_system(workspace: Workspace, options: argparse.Namespace) -> ExitCode:
                 network=tuple(link.emulator_arguments()) if link is not None else (),
             )
             try:
-                result = run_attached(boot_command(profile, toolchain, request), deadline)
+                result = run_attached(
+                    boot_command(profile, toolchain, request), deadline, held_input
+                )
             except KeyboardInterrupt:
                 raise CheckError("the session was interrupted") from None
             if not asks_restart(result, deadline):
                 return ExitCode.OK
             logger.info("the system asked for a restart; booting it again")
+
+
+def redirected_input() -> HeldInput | None:
+    operator = sys.stdin
+    if operator is None or operator.isatty():
+        return None
+    return HeldInput(operator.fileno(), SHELL_READY)
 
 
 def system_files(workspace: Workspace, profile: Profile, installation: Path | None) -> SystemFiles:

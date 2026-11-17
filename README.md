@@ -1,5 +1,7 @@
 # Kernel
 
+[English](README.en.md)
+
 Kernel Python-first para RISC-V de 64 bits. As políticas do sistema são escritas em Python e rodam em MicroPython dentro do supervisor, em S-mode. Cada processo de usuário é outro MicroPython, em U-mode, com o próprio espaço de endereçamento. O código nativo, em C17 e Assembly, cobre o que depende da máquina e o que não pode confiar em Python: boot, traps, memória virtual, troca de contexto, capabilities, IPC, transporte de dispositivos e validação das chamadas de processo.
 
 O alvo é a máquina `virt` do QEMU com o firmware OpenSBI. O convidado não tem Linux e não usa semihosting.
@@ -33,11 +35,14 @@ O kernel usa um único hart, e o isolamento foi exercitado só no QEMU com TCG. 
 
 A versão 1.0 ainda não está qualificada. Dois gates de release pedem 24 horas de execução cada, o soak e o fuzzing de cada família, e ainda não foram cumpridos. O estado de cada gate, com o que foi executado, está no [registro de homologação](docs/acceptance/qualification-and-distribution.md).
 
+Compilado e exercitado em Amazon Linux 2023: 998 testes de host e conformidade, 28/28 verificações da matriz, 1.000 boots e 8/8 budgets cumpridos. Duas compilações limpas reproduziram as imagens. Os hashes e o ambiente estão na [evidência de compilação](docs/acceptance/amazon-linux-2023.json); isso não substitui os dois gates de 24 horas ainda abertos.
+
 ## Requisitos do host
 
 - Linux x86_64. Os pacotes de `toolchain.lock.toml` são para essa plataforma.
 - [uv](https://docs.astral.sh/uv/). O projeto é desenvolvido com a versão 0.13.5. O uv instala o Python 3.13 indicado em `.python-version`.
-- `make` e o GCC do host, acessível como `cc` e como `gcc`, com AddressSanitizer e UndefinedBehaviorSanitizer. Ele compila o `mpy-cross` e os testes nativos hospedados.
+- `make` e o GCC do host, acessível como `cc` e como `gcc`, com AddressSanitizer e UndefinedBehaviorSanitizer. Ele compila o `mpy-cross` e os testes nativos hospedados. No Amazon Linux 2023 o runtime dos sanitizers vem à parte, nos pacotes `libasan` e `libubsan`. Sem `make`, `cc` ou `gcc`, `build` termina com status 3 e diz qual falta.
+- Caminhos sem espaço para o repositório, o diretório de build e o cache da toolchain. O `make` separa nomes de arquivo nos espaços, e `build` recusa um caminho assim com status 3 e o cita. Acentos passam.
 - Cerca de 2,5 GB livres para a toolchain. Ela fica em `~/.cache/kernel-tool` ou no diretório indicado por `KERNEL_TOOL_CACHE`.
 - Para a rede: permissão para criar um namespace de rede com uma interface TAP. Serve rodar como root, um host que permita user namespaces sem privilégio com acesso a `/dev/net/tun`, ou `sudo` sem senha. Sem isso `run` segue sem rede, e as suítes de rede terminam com status 3.
 
@@ -61,7 +66,7 @@ shell: command=ping status=ok
 kernel> shutdown
 ```
 
-`--deadline` limita o tempo da sessão e `--without-network` dispensa a rede. O perfil padrão é `qemu-riscv64`; `--profile` escolhe outro arquivo de `config/profiles/`. O uso do shell está em [Operar o sistema](docs/operations/system-operation.md).
+`--deadline` limita o tempo da sessão e `--without-network` dispensa a rede. Quando a entrada vem de um pipe ou de um arquivo, `run` só a entrega ao sistema depois de `shell: ready`. O perfil padrão é `qemu-riscv64`; `--profile` escolhe outro arquivo de `config/profiles/`. O uso do shell está em [Operar o sistema](docs/operations/system-operation.md).
 
 ## Verificar
 
@@ -115,7 +120,7 @@ uv run kernel-tool verify-artifacts --reproduce
 | `fault-test --suite storage-crash` | Estados que uma queda de energia deixaria no disco, com perda, corte e reordenação das escritas ainda sem flush: 66 pontos de crash em 11 transações, 1.000 sequências geradas a partir da seed 1 e o registro de escritas e flushes de um boot no QEMU. Cada estado precisa montar em um commit inteiro, com todo `sync` confirmado. A montagem roda no host, com o código de recuperação do convidado |
 | `fault-test --suite network-faults` | 31 espécimes de quadros malformados, de Ethernet a TCP, cada um contado pelo parser da sua camada; 32 pedidos de conexão forjados contra uma fila de aceitação; 1,5 s de enlace caído no meio de uma transferência; reset do dispositivo de rede; reinício do serviço com um cliente à espera |
 | `verify-filesystem --corpus` | As 21 imagens de `tests/faults/storage`, válidas, truncadas, incompatíveis e corrompidas, cada uma com o veredito esperado |
-| `verify-artifacts --reproduce` | Ligação estática, origem de cada entrada do link, layout e hashes das imagens; compila de novo em outro diretório e exige imagens idênticas |
+| `verify-artifacts --reproduce` | Ligação estática, origem de cada entrada do link, layout e hashes das imagens, e nenhum caminho da máquina de build dentro delas; compila de novo em outro diretório e exige imagens idênticas |
 | `inventory` | Versão e hash de cada ferramenta usada no build |
 
 Os relatórios ficam em `build/qemu-riscv64/reports/`, e as capturas de tráfego das suítes de rede em `reports/captures/`.
@@ -173,6 +178,8 @@ Os relatórios de homologação ficam em `build/qemu-riscv64/qualification/` e e
 | `docs/` | Decisões de arquitetura, requisitos, conformidade, segurança, operação e registros de aceite |
 
 ## Documentação
+
+Cada documento tem a versão em português, que é a original, e uma versão em inglês ao lado, com o sufixo `.en.md`.
 
 - [Operar o sistema](docs/operations/system-operation.md), [operar a rede](docs/operations/network-operation.md) e [serviços e configuração](docs/operations/services-and-configuration.md)
 - [Matriz de requisitos](docs/architecture/requirements.md) e [matriz de conformidade das APIs públicas](docs/architecture/api-conformance.md)

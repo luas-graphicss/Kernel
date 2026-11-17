@@ -1,5 +1,7 @@
 # Imagem de usuário
 
+[English](user-image.en.md)
+
 Formato do arquivo que carrega os programas de U-mode. O firmware o entrega como módulo de boot, na faixa `linux,initrd-start` a `linux,initrd-end` do nó `/chosen` do DTB.
 
 A imagem contém o runtime MicroPython de usuário e os módulos Python congelados. Todo processo é criado a partir dela, e o programa de cada um é o módulo indicado no pedido de criação. O conteúdo é linkado para o endereço virtual `load_base`, começando pelo próprio cabeçalho. Não há relocação.

@@ -1,5 +1,7 @@
 # Gerente do sistema e serviço de controle
 
+[English](control-service.en.md)
+
 O gerente, `kernel_services.manager.main`, é o primeiro processo de usuário quando o boot recebe `init=kernel_services.manager.main`, que é o que `kernel-tool run` passa. Ele roda em U-mode, com prioridade 1, e é o único processo que recebe a capability do sistema. Ele lê a configuração, inicia e supervisiona os serviços, atende o shell por um endpoint de controle, inicia as aplicações e conduz a parada. A configuração está em `configuration.md` e as aplicações em `applications.md`.
 
 O `init` anterior, `kernel_services.init.main`, continua sendo o padrão sem o argumento. Ele inicia os serviços de dispositivo, confere cada um e encerra, e é o que o cenário `boot` da suíte `bootstrap` executa.

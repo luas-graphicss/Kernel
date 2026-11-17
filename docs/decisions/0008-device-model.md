@@ -1,5 +1,7 @@
 # ADR 0008: Dispositivos e DMA mediado
 
+[English](0008-device-model.en.md)
+
 Estado: aceita.
 
 ## Contexto

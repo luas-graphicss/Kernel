@@ -23,7 +23,12 @@ from kernel_protocol.services.console import (
 )
 from kernel_protocol.services.lifecycle import OPERATION_STOP
 from kernel_protocol.syscalls.numbers import DEADLINE_NEVER
-from kernel_services.console.discipline import LINE_FEED_BYTES, NEW_LINE, LineDiscipline
+from kernel_services.console.discipline import (
+    LINE_FEED_BYTES,
+    NEW_LINE,
+    LineDiscipline,
+    OverlongLine,
+)
 
 POLL = 0
 INPUT_SLICE_NANOSECONDS = 5000000
@@ -137,9 +142,13 @@ class Console:
         if reader is None:
             return
         line = self._discipline.take_line()
-        if line is not None:
-            self._reader = None
+        if line is None:
+            if clock() >= self._reader_deadline:
+                self._reader = None
+                services.refuse(reader, TIMED_OUT)
+            return
+        self._reader = None
+        if isinstance(line, OverlongLine):
+            services.refuse(reader, MESSAGE_TOO_LARGE)
+        else:
             services.respond(reader, Reply(line))
-        elif clock() >= self._reader_deadline:
-            self._reader = None
-            services.refuse(reader, TIMED_OUT)

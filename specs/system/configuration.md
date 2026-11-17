@@ -1,5 +1,7 @@
 # Configuração do sistema
 
+[English](configuration.en.md)
+
 O sistema lê uma única configuração, o arquivo `system/config` da imagem de boot, antes de iniciar qualquer serviço além do armazenamento. O arquivo é texto e é tratado como dados: o leitor reconhece seções, chaves, números, textos e listas, e nada nele é avaliado como Python. O arquivo do repositório é `config/system/system.conf`, e o código está em `kernel_protocol.configuration`.
 
 A configuração é lida inteira, validada inteira e só então aplicada. Um erro em qualquer ponto recusa o documento todo: nenhum serviço da configuração inicia, o sistema informa o motivo e termina com `kernel: status=failed`.
