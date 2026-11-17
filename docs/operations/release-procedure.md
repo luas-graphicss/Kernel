@@ -1,6 +1,6 @@
 # Qualificar e montar um release
 
-Um release sai de um build cujas evidências foram todas produzidas para as mesmas imagens. Cada comando abaixo grava um relatório com o SHA-256 de `kernel.elf`, `init.img` e `boot.img`. `release-check` só aceita relatórios dessas imagens: depois de qualquer mudança que altere uma delas, a evidência anterior deixa de valer.
+Um release sai de um build cujas evidências foram todas produzidas para as mesmas imagens. Cada comando abaixo grava um relatório com o SHA-256 de `kernel.elf`, `init.img` e `boot.img`. `release-check` só aceita relatórios dessas imagens: depois de qualquer mudança que altere uma delas, a evidência anterior deixa de valer. Os hashes não mudam com o lugar da árvore, do diretório de build ou do cache da toolchain.
 
 ## Sequência
 

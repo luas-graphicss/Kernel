@@ -115,7 +115,7 @@ uv run kernel-tool verify-artifacts --reproduce
 | `fault-test --suite storage-crash` | Estados que uma queda de energia deixaria no disco, com perda, corte e reordenação das escritas ainda sem flush: 66 pontos de crash em 11 transações, 1.000 sequências geradas a partir da seed 1 e o registro de escritas e flushes de um boot no QEMU. Cada estado precisa montar em um commit inteiro, com todo `sync` confirmado. A montagem roda no host, com o código de recuperação do convidado |
 | `fault-test --suite network-faults` | 31 espécimes de quadros malformados, de Ethernet a TCP, cada um contado pelo parser da sua camada; 32 pedidos de conexão forjados contra uma fila de aceitação; 1,5 s de enlace caído no meio de uma transferência; reset do dispositivo de rede; reinício do serviço com um cliente à espera |
 | `verify-filesystem --corpus` | As 21 imagens de `tests/faults/storage`, válidas, truncadas, incompatíveis e corrompidas, cada uma com o veredito esperado |
-| `verify-artifacts --reproduce` | Ligação estática, origem de cada entrada do link, layout e hashes das imagens; compila de novo em outro diretório e exige imagens idênticas |
+| `verify-artifacts --reproduce` | Ligação estática, origem de cada entrada do link, layout e hashes das imagens, e nenhum caminho da máquina de build dentro delas; compila de novo em outro diretório e exige imagens idênticas |
 | `inventory` | Versão e hash de cada ferramenta usada no build |
 
 Os relatórios ficam em `build/qemu-riscv64/reports/`, e as capturas de tráfego das suítes de rede em `reports/captures/`.
