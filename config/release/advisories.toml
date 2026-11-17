@@ -1,0 +1,100 @@
+version = 1
+reviewed = "2026-11-17"
+sources = [
+    "https://services.nvd.nist.gov/rest/json/cves/2.0 with virtualMatchString for the pinned version",
+    "https://services.nvd.nist.gov/rest/json/cves/2.0 with keywordSearch for the component name",
+]
+
+[[component]]
+name = "micropython"
+version = "1.29.0"
+
+[[component.advisory]]
+id = "CVE-2023-7152"
+severity = "medium"
+applicable = false
+reason = "The advisory covers 1.21.0 and 1.22.0-preview; the version match for 1.29.0 returns nothing and the port does not build the select module."
+
+[[component.advisory]]
+id = "CVE-2023-7158"
+severity = "high"
+applicable = false
+reason = "The advisory covers releases up to 1.21.0; the version match for 1.29.0 returns nothing."
+
+[[component.advisory]]
+id = "CVE-2024-8946"
+severity = "high"
+applicable = false
+reason = "The advisory covers 1.23.0; the version match for 1.29.0 returns nothing and the port does not build the runtime VFS."
+
+[[component.advisory]]
+id = "CVE-2024-8947"
+severity = "medium"
+applicable = false
+reason = "The advisory covers 1.22.2; the version match for 1.29.0 returns nothing."
+
+[[component.advisory]]
+id = "CVE-2024-8948"
+severity = "high"
+applicable = false
+reason = "The advisory covers 1.23.0; the version match for 1.29.0 returns nothing."
+
+[[component.advisory]]
+id = "CVE-2026-1998"
+severity = "low"
+applicable = false
+reason = "The advisory covers releases up to 1.27.0; the version match for 1.29.0 returns nothing."
+
+[[component]]
+name = "opensbi"
+version = "1.5.1"
+
+[[component.advisory]]
+id = "CVE-2025-63913"
+severity = "high"
+applicable = false
+reason = "The advisory names 1.3 and has no version ranges yet, so 1.5.1 is not ruled out by version. The flaw needs a caller in supervisor mode using the PMU extension: the kernel calls only the debug console, timer and system reset extensions, and a system call from a process is handled by the kernel and never forwarded to the firmware."
+
+[[component]]
+name = "riscv-none-elf-gcc"
+version = "15.2.0-1"
+
+[[component.advisory]]
+id = "CVE-2023-4039"
+severity = "medium"
+applicable = false
+reason = "The advisory is about the stack protector on AArch64 targets in compilers older than September 2023; the images are built for RISC-V with 15.2.0."
+
+[[component]]
+name = "qemu-riscv"
+version = "9.2.4-1"
+
+[[component.advisory]]
+id = "CVE-2017-5957"
+severity = "medium"
+applicable = false
+reason = "The flaw is in virglrenderer; the profile starts the emulator without a display or a graphics device."
+
+[[component.advisory]]
+id = "CVE-2021-20255"
+severity = "medium"
+applicable = false
+reason = "The flaw is in the eepro100 network card; the profile starts without default devices and attaches only VirtIO devices."
+
+[[component.advisory]]
+id = "CVE-2023-1386"
+severity = "low"
+applicable = false
+reason = "The flaw is in the 9p passthrough filesystem, which the profile never attaches."
+
+[[component.advisory]]
+id = "CVE-2025-54566"
+severity = "medium"
+applicable = false
+reason = "The flaw is in PCI SR-IOV migration state; the profile has no PCI device and never migrates."
+
+[[component.advisory]]
+id = "CVE-2025-54567"
+severity = "medium"
+applicable = false
+reason = "The flaw is in the PCI SR-IOV enable mask; the profile has no PCI device."

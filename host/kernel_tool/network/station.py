@@ -12,10 +12,9 @@ from kernel_tool.network.impairment import Impairment
 from kernel_tool.network.isolation import build_interface
 from kernel_tool.network.peers import Peers
 from kernel_tool.network.relay import Relay
+from kernel_tool.network.sockets import GUEST_SOCKET, STATION_SOCKET
 
 INTERFACE = "tap0"
-STATION_SOCKET = "station.sock"
-GUEST_SOCKET = "guest.sock"
 CAPTURE_FILE = "traffic.pcap"
 SNAP_BYTES = 96
 SOCKET_MODE = 0o666
@@ -26,21 +25,23 @@ DOWNLINK_SEED_OFFSET = 1
 
 
 class Station:
-    def __init__(self, directory: Path, plan: dict[str, object], rootless: bool) -> None:
+    def __init__(
+        self, directory: Path, sockets: Path, plan: dict[str, object], rootless: bool
+    ) -> None:
         self._directory = directory
         self._lock = threading.Lock()
         self._input = b""
         tap = build_interface(INTERFACE, str(plan["address"]), int(str(plan["prefix"])), rootless)
         wire = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-        wire.bind(str(directory / STATION_SOCKET))
-        Path(directory / STATION_SOCKET).chmod(SOCKET_MODE)
+        wire.bind(str(sockets / STATION_SOCKET))
+        Path(sockets / STATION_SOCKET).chmod(SOCKET_MODE)
         self._capture = Capture(directory / CAPTURE_FILE, SNAP_BYTES)
         Path(directory / CAPTURE_FILE).chmod(CAPTURE_MODE)
         seed = int(str(plan["seed"]))
         self._relay = Relay(
             tap,
             wire,
-            directory / GUEST_SOCKET,
+            sockets / GUEST_SOCKET,
             Impairment(_policy(plan, "uplink"), seed + UPLINK_SEED_OFFSET),
             Impairment(_policy(plan, "downlink"), seed + DOWNLINK_SEED_OFFSET),
             self._capture,
@@ -110,6 +111,7 @@ def _policy(document: dict[str, object], name: str) -> dict[str, float]:
 def main() -> int:
     parser = argparse.ArgumentParser(prog="kernel-tool-network-station")
     parser.add_argument("--directory", type=Path, required=True)
+    parser.add_argument("--sockets", type=Path, required=True)
     parser.add_argument("--plan", type=Path, required=True)
     parser.add_argument("--rootless", action="store_true")
     parser.add_argument("--probe", action="store_true")
@@ -118,7 +120,7 @@ def main() -> int:
     if options.probe:
         build_interface(INTERFACE, str(plan["address"]), int(str(plan["prefix"])), options.rootless)
         return 0
-    Station(options.directory, plan, options.rootless).run()
+    Station(options.directory, options.sockets, plan, options.rootless).run()
     return 0
 
 

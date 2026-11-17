@@ -163,6 +163,8 @@ kernel: status=ok
 
 `shutdown` encerra as aplicações, para os serviços na ordem inversa do início e sincroniza os volumes antes de desligar. Não é preciso rodar `sync` antes. Com `restart`, `kernel-tool run` inicia o sistema de novo com o mesmo volume de dados; sem ele, `run` termina.
 
+As linhas do próprio shell para esse comando, `shutdown: action=` e o status, nem sempre aparecem. O shell é o primeiro serviço a parar, e a parada pode alcançá-lo antes de ele escrever. As linhas `system: shutdown=` do gerente aparecem sempre.
+
 `clean=0` em um serviço ou na última linha significa que algum serviço não respondeu à parada em 20 segundos e foi encerrado à força. Confira os dados depois do próximo boot.
 
 ## Erros comuns

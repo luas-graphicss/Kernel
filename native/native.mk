@@ -3,6 +3,7 @@ NATIVE_ARCH_FLAGS := $(NATIVE_ISA_FLAGS) -mcmodel=medany -mno-relax
 NATIVE_PATH_MAPS := \
 	-ffile-prefix-map=$(CURDIR)=. \
 	-ffile-prefix-map=$(MICROPYTHON_DIR)=micropython \
+	-ffile-prefix-map=$(COMPILER_DIR)=compiler \
 	-ffile-prefix-map=$(BUILD)=build
 NATIVE_FREESTANDING_FLAGS := \
 	-ffreestanding -fno-common -fno-pie -fno-stack-protector \
@@ -40,9 +41,11 @@ NATIVE_C_SOURCES := \
 	native/supervisor/devices/virtio/mmio.c \
 	native/supervisor/devices/virtio/negotiation.c \
 	native/supervisor/devices/virtio/queue.c \
+	native/supervisor/diagnostics/collector_pauses.c \
 	native/supervisor/diagnostics/console.c \
 	native/supervisor/diagnostics/counters.c \
 	native/supervisor/diagnostics/halt.c \
+	native/supervisor/diagnostics/pause_statistics.c \
 	native/supervisor/events/event_queue.c \
 	native/supervisor/ipc/call.c \
 	native/supervisor/ipc/endpoint.c \

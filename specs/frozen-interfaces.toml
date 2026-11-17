@@ -1,0 +1,51 @@
+version = 1
+
+[[interface]]
+name = "abi"
+version = "1.0"
+digest = "d073755e84fa848a17b8630f82f1fd8098d4c2dbee0b1d14ba375a4562082f87"
+sources = [
+    "native/include/kernel/abi",
+    "src/_process.pyi",
+    "src/kernel_protocol/devices",
+    "src/kernel_protocol/errors",
+    "src/kernel_protocol/identity",
+    "src/kernel_protocol/processes",
+    "src/kernel_protocol/syscalls",
+    "src/kernel_protocol/wire",
+]
+
+[[interface]]
+name = "service-protocol"
+version = "1.0"
+digest = "9c8eaea53e879e630635937a68edaea2e8658b8cb939c05f15913fa769c3e18b"
+sources = [
+    "src/kernel_protocol/services",
+    "src/kernel_protocol/system",
+]
+
+[[interface]]
+name = "image-manifest"
+version = "1.0"
+digest = "398bbeae02bf21eebce18fc4ace0231736a454c5fa643f1dbf092e1993cecd0a"
+sources = [
+    "host/kernel_tool/images/user_image.py",
+    "native/include/kernel/abi/user_image.h",
+    "src/kernel_services/filesystem/boot/layout.py",
+]
+
+[[interface]]
+name = "configuration"
+version = "1.0"
+digest = "f2a3bcca9853523fc860bf750941555d80511162a4f3255651bb4ffdf6fe1fca"
+sources = [
+    "src/kernel_protocol/configuration",
+]
+
+[[interface]]
+name = "persistent-format"
+version = "1.0"
+digest = "b11a610fb75360a7236f99316ed403180532f380b9c958e842085d2c9af06296"
+sources = [
+    "src/kernel_services/filesystem/format",
+]

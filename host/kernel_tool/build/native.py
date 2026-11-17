@@ -79,6 +79,7 @@ def make_variables(profile: Profile, toolchain: Toolchain, directory: Path) -> d
     return {
         "BUILD": str(directory),
         "CROSS_COMPILE": str(toolchain.cross_prefix),
+        "COMPILER_DIR": str(toolchain.compiler_root),
         "MICROPYTHON_DIR": str(toolchain.runtime_source),
         "KERNEL_BASE": hex(layout.kernel_base),
         "SUPERVISOR_STACK_BYTES": hex(layout.supervisor_stack_bytes),

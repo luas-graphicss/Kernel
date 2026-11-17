@@ -4,6 +4,7 @@
 #include "py/runtime.h"
 
 #include "bindings/bindings.h"
+#include "kernel/diagnostics/collector_pauses.h"
 #include "kernel/diagnostics/counters.h"
 #include "kernel/memory/physical_memory.h"
 #include "kernel/startup/environment.h"
@@ -85,3 +86,17 @@ static mp_obj_t supervisor_counters(void)
     return supervisor_new_tuple_of_integers(values, COUNTERS);
 }
 MP_DEFINE_CONST_FUN_OBJ_0(supervisor_counters_obj, supervisor_counters);
+
+static mp_obj_t supervisor_collections(void)
+{
+    const struct pause_summary summary = collector_pauses_summary();
+    const uint64_t values[] = {
+        summary.count,
+        summary.total_nanoseconds,
+        summary.longest_nanoseconds,
+        summary.percentile_99_nanoseconds,
+    };
+
+    return supervisor_new_tuple_of_integers(values, MP_ARRAY_SIZE(values));
+}
+MP_DEFINE_CONST_FUN_OBJ_0(supervisor_collections_obj, supervisor_collections);

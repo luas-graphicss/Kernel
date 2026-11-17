@@ -16,6 +16,7 @@ HOSTED_SOURCES = (
     "native/supervisor/devices/virtio/device.c",
     "native/supervisor/devices/virtio/negotiation.c",
     "native/supervisor/devices/virtio/queue.c",
+    "native/supervisor/diagnostics/pause_statistics.c",
     "native/supervisor/events/event_queue.c",
     "native/supervisor/ipc/message.c",
     "native/supervisor/memory/address_space.c",
@@ -61,7 +62,7 @@ def run_hosted_tests(workspace: Workspace) -> list[str]:
 
     output_dir = workspace.build_dir / "native-check"
     output_dir.mkdir(parents=True, exist_ok=True)
-    _require_sanitizers(compiler, output_dir)
+    require_sanitizers(compiler, output_dir)
 
     tests = sorted((workspace.root / TEST_DIRECTORY).glob("*_test.c"))
     if not tests:
@@ -78,7 +79,7 @@ def run_hosted_tests(workspace: Workspace) -> list[str]:
     return suites
 
 
-def _require_sanitizers(compiler: str, output_dir: Path) -> None:
+def require_sanitizers(compiler: str, output_dir: Path) -> None:
     probe = output_dir / "sanitizer_probe.c"
     binary = output_dir / "sanitizer_probe"
     probe.write_text(PROBE_SOURCE, encoding="ascii")

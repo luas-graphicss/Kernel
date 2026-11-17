@@ -10,6 +10,7 @@ from kernel_tool.scenarios.fault_suites import FAULT_SUITES
 from kernel_tool.scenarios.guest_suites import CASES, CYCLES_CASE, GUEST_SUITES, MEASURED_CYCLES
 from kernel_tool.scenarios.model import BootModule, Deadline, Image, Scenario
 from kernel_tool.scenarios.network_suites import NETWORK_SUITES
+from kernel_tool.scenarios.release_suites import RELEASE_SUITES
 from kernel_tool.scenarios.system_suites import SUPERVISION_SCENARIO, SYSTEM_SUITES
 from kernel_tool.verification.transcript import read_transcript
 
@@ -133,7 +134,8 @@ def failures(candidate: Scenario, serial_output: str) -> list[str]:
 
 def test_every_required_suite_is_registered_next_to_bootstrap() -> None:
     assert set(GUEST_SUITES) == REQUIRED
-    assert set(SUITES) == REQUIRED | {"bootstrap"} | set(NETWORK_SUITES) | set(SYSTEM_SUITES)
+    system = set(NETWORK_SUITES) | set(SYSTEM_SUITES) | set(RELEASE_SUITES)
+    assert set(SUITES) == REQUIRED | {"bootstrap"} | system
     for name in REQUIRED:
         assert SUITES[name] is GUEST_SUITES[name]
 

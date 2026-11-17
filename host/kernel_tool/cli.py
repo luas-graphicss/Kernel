@@ -7,12 +7,21 @@ from pathlib import Path
 
 from kernel_tool.commands import (
     artifacts,
+    benchmark,
+    boots,
     build,
     emulation,
     fault_test,
+    fuzz,
+    installation,
+    interfaces,
+    release,
+    reproduce,
+    soak,
     storage,
     test,
     toolchain,
+    verify,
 )
 from kernel_tool.commands.options import Command
 from kernel_tool.outcome import ToolError
@@ -24,8 +33,17 @@ REGISTRARS = (
     emulation.register,
     test.register,
     fault_test.register,
+    verify.register,
+    fuzz.register,
+    boots.register,
+    soak.register,
+    benchmark.register,
     storage.register,
     artifacts.register,
+    reproduce.register,
+    interfaces.register,
+    release.register,
+    installation.register,
 )
 
 logger = logging.getLogger("kernel_tool")

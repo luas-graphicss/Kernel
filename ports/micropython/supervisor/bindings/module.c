@@ -26,6 +26,7 @@ static const mp_rom_map_elem_t supervisor_globals_table[] = {
     {MP_ROM_QSTR(MP_QSTR_arguments), MP_ROM_PTR(&supervisor_arguments_obj)},
     {MP_ROM_QSTR(MP_QSTR_memory), MP_ROM_PTR(&supervisor_memory_obj)},
     {MP_ROM_QSTR(MP_QSTR_counters), MP_ROM_PTR(&supervisor_counters_obj)},
+    {MP_ROM_QSTR(MP_QSTR_collections), MP_ROM_PTR(&supervisor_collections_obj)},
     {MP_ROM_QSTR(MP_QSTR_prepare_program), MP_ROM_PTR(&supervisor_prepare_program_obj)},
     {MP_ROM_QSTR(MP_QSTR_footprint), MP_ROM_PTR(&supervisor_footprint_obj)},
     {MP_ROM_QSTR(MP_QSTR_spawn), MP_ROM_PTR(&supervisor_spawn_obj)},

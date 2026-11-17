@@ -9,6 +9,7 @@ MP_DECLARE_CONST_FUN_OBJ_0(supervisor_user_region_obj);
 MP_DECLARE_CONST_FUN_OBJ_0(supervisor_arguments_obj);
 MP_DECLARE_CONST_FUN_OBJ_0(supervisor_memory_obj);
 MP_DECLARE_CONST_FUN_OBJ_0(supervisor_counters_obj);
+MP_DECLARE_CONST_FUN_OBJ_0(supervisor_collections_obj);
 MP_DECLARE_CONST_FUN_OBJ_0(supervisor_prepare_program_obj);
 MP_DECLARE_CONST_FUN_OBJ_1(supervisor_footprint_obj);
 MP_DECLARE_CONST_FUN_OBJ_VAR_BETWEEN(supervisor_spawn_obj);

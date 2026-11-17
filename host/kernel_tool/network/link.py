@@ -4,11 +4,13 @@ import queue
 import subprocess
 import sys
 import threading
+from contextlib import ExitStack
 from pathlib import Path
 from types import TracebackType
 
 from kernel_tool.network.plan import GUEST_HARDWARE, NetworkPlan
-from kernel_tool.network.station import CAPTURE_FILE, GUEST_SOCKET, STATION_SOCKET
+from kernel_tool.network.sockets import GUEST_SOCKET, STATION_SOCKET, socket_directory
+from kernel_tool.network.station import CAPTURE_FILE
 from kernel_tool.outcome import InfrastructureError
 
 HOST_PACKAGES = Path(__file__).resolve().parents[2]
@@ -66,6 +68,7 @@ class StationLink:
     def __init__(self, directory: Path, plan: NetworkPlan) -> None:
         self._directory = directory
         self._plan = plan
+        self._sockets = socket_directory()
         self._process: subprocess.Popen[str] | None = None
         self._heard: queue.Queue[dict[str, object]] = queue.Queue()
         self._events: list[dict[str, object]] = []
@@ -75,11 +78,26 @@ class StationLink:
     def __enter__(self) -> "StationLink":
         directory = self._directory
         directory.mkdir(parents=True, exist_ok=True)
-        for stale in (STATION_SOCKET, GUEST_SOCKET, CAPTURE_FILE):
-            (directory / stale).unlink(missing_ok=True)
+        (directory / CAPTURE_FILE).unlink(missing_ok=True)
         plan = directory / PLAN_FILE
         plan.write_text(json.dumps(self._plan.to_document(), sort_keys=True), encoding="utf-8")
-        command = isolated_command(["--directory", str(directory), "--plan", str(plan)])
+        with ExitStack() as failure:
+            failure.callback(self.stop)
+            self._start(
+                [
+                    "--directory",
+                    str(directory),
+                    "--sockets",
+                    self._sockets.name,
+                    "--plan",
+                    str(plan),
+                ]
+            )
+            failure.pop_all()
+        return self
+
+    def _start(self, arguments: list[str]) -> None:
+        command = isolated_command(arguments)
         try:
             self._process = subprocess.Popen(
                 command,
@@ -94,7 +112,6 @@ class StationLink:
         self._reader = threading.Thread(target=self._listen, daemon=True)
         self._reader.start()
         self._await_ready()
-        return self
 
     def __exit__(
         self,
@@ -109,8 +126,8 @@ class StationLink:
         return self._directory / CAPTURE_FILE
 
     def emulator_arguments(self) -> list[str]:
-        guest = self._directory / GUEST_SOCKET
-        station = self._directory / STATION_SOCKET
+        guest = Path(self._sockets.name) / GUEST_SOCKET
+        station = Path(self._sockets.name) / STATION_SOCKET
         guest.unlink(missing_ok=True)
         return [
             "-netdev",
@@ -138,6 +155,10 @@ class StationLink:
                 return tuple(self._events)
 
     def stop(self) -> None:
+        self._stop_station()
+        self._sockets.cleanup()
+
+    def _stop_station(self) -> None:
         process = self._process
         if process is None:
             return

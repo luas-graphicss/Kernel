@@ -2,6 +2,7 @@ from pathlib import Path
 
 from kernel_tool.build.native import BuildOutputs
 from kernel_tool.outcome import CheckError
+from kernel_tool.release.identity import project_version
 from kernel_tool.scenarios.model import BootEntry
 from kernel_tool.storage.boot_image import (
     BootFile,
@@ -22,7 +23,8 @@ def boot_volume_file(
     if not overlay:
         return outputs.boot_image
     runtime = runtime_tag(load_lock(root / LOCK_FILE_NAME))
-    files = {file.path: file for file in (*load_files(root), release_file(runtime))}
+    release = release_file(runtime, project_version(root))
+    files = {file.path: file for file in (*load_files(root), release)}
     for entry in overlay:
         if entry.source is None:
             files.pop(entry.path, None)
