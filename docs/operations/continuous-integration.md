@@ -32,6 +32,8 @@ Um namespace novo herda do host o encaminhamento IPv4, e um host que roda Docker
 
 O `kernel-tool` cria o namespace de três jeitos, nesta ordem: direto, quando já roda como root; em um user namespace sem privilégio, quando o host permite e `/dev/net/tun` está acessível; com `sudo -n`, quando o sudo não pede senha. O runner `ubuntu-24.04` tem sudo sem senha, e por isso o terceiro caso está disponível mesmo quando a imagem restringe user namespaces. Se nenhum dos três funciona, a etapa termina com status 3 e a anotação `Infrastructure unavailable`.
 
+Os dois sockets que ligam o emulador à estação ficam em um diretório temporário próprio de cada enlace, e não no diretório de build. O endereço de um socket guarda 107 bytes, e abaixo de `/home/runner/work/Kernel/Kernel` o caminho do build não deixava espaço para o nome de um cenário de 27 caracteres ou mais.
+
 O sudo só inicia a estação. Build, QEMU e o resto do `kernel-tool` continuam com o usuário do runner. O workflow não instala pacotes para isso e não muda as permissões do job.
 
 ## Como ler o resultado
