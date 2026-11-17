@@ -1,5 +1,7 @@
 # Capabilities
 
+[English](capabilities.en.md)
+
 Toda autoridade de um processo é uma capability na sua tabela: um objeto do supervisor, um conjunto de direitos e o vínculo com a capability de que foi derivada. O processo a nomeia por um handle, no formato de `handles.md`. As decisões estão no ADR 0005.
 
 ## Direitos

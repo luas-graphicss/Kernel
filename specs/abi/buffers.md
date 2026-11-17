@@ -1,5 +1,7 @@
 # Buffers
 
+[English](buffers.en.md)
+
 Um buffer é uma faixa de memória física que o supervisor entrega a processos por capability. É a forma de trocar dados maiores que o payload de uma mensagem sem compartilhar objetos Python entre runtimes.
 
 ## Criação

@@ -1,5 +1,7 @@
 # Serviços de dispositivo
 
+[English](device-services.en.md)
+
 Os drivers são processos em U-mode que o `init` inicia a partir do manifesto em `kernel_services.init.manifest`. Cada um recebe a capability de um dispositivo, descrita em `devices.md`, e a oferece a outros processos por um endpoint de IPC. As mensagens seguem `messages.md`, e os formatos estão em `kernel_protocol.services`.
 
 | Serviço | Programa | Dispositivo | Prioridade |

@@ -1,5 +1,7 @@
 # Processos
 
+[English](processes.en.md)
+
 Um processo é um espaço de endereçamento, uma tabela de capabilities e um runtime MicroPython privado. O modelo está no ADR 0004.
 
 ## Criação

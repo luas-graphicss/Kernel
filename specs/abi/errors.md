@@ -1,5 +1,7 @@
 # Códigos de erro
 
+[English](errors.en.md)
+
 Um único conjunto de códigos vale para syscalls, mensagens e modelos Python. Os valores são inteiros pequenos e estáveis dentro de uma versão da ABI.
 
 | Código | Nome | Quando ocorre |

@@ -1,5 +1,7 @@
 # Mensagens
 
+[English](messages.en.md)
+
 Toda mensagem de IPC começa por um cabeçalho de 24 bytes, seguido do payload. Os inteiros são little-endian e sem sinal. O formato é definido campo a campo: nenhum lado serializa structs C nem objetos Python.
 
 ## Cabeçalho

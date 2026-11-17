@@ -1,6 +1,8 @@
 # Syscalls
 
-ABI versão 0. Ela muda sem aviso até a versão 1.
+[English](syscalls.en.md)
+
+ABI versão 1.0, congelada conforme `specs/compatibility.md`.
 
 ## Convenção
 
@@ -74,7 +76,7 @@ Escreve bytes no console de diagnóstico do supervisor.
 - Faixa `[endereço, endereço + comprimento)` que o processo não pode ler, ou soma que estoura 64 bits: `-BAD_ADDRESS`, nada é escrito.
 - Comprimento zero é válido e devolve 0.
 
-Esta syscall não recebe capability. Ela é o canal de diagnóstico dos programas e das suítes, e não passa pelo serviço de console: a saída de um processo comum deve usar o endpoint do console, descrito em `device-services.md`. Ela sai da tabela quando os programas do sistema tiverem migrado para o serviço.
+Esta syscall não recebe capability. Ela é o canal de diagnóstico dos programas e das suítes, e não passa pelo serviço de console: a saída de um processo comum deve usar o endpoint do console, descrito em `device-services.md`. A remoção desta syscall exige uma mudança incompatível conforme `specs/compatibility.md`.
 
 ### `clock_now`
 

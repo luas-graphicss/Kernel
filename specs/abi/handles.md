@@ -1,5 +1,7 @@
 # Handles
 
+[English](handles.en.md)
+
 Um handle identifica um slot em uma tabela e a geração desse slot. Ele é opaco para quem o recebe e só tem significado na tabela que o emitiu.
 
 ## Formato

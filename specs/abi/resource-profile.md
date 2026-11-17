@@ -1,5 +1,7 @@
 # Perfil de recursos
 
+[English](resource-profile.en.md)
+
 Um perfil descreve a máquina, o layout de memória e os limites com que uma imagem é construída e testada. O arquivo é TOML e fica em `config/profiles/`. O único perfil é `qemu-riscv64`.
 
 `kernel-tool` lê o perfil, passa layout e limites ao build nativo e monta a linha de comando do QEMU. O supervisor entrega os limites compilados à política Python, que os confronta com o que o DTB descreve.
