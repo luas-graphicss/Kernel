@@ -37,7 +37,8 @@ A versão 1.0 ainda não está qualificada. Dois gates de release pedem 24 horas
 
 - Linux x86_64. Os pacotes de `toolchain.lock.toml` são para essa plataforma.
 - [uv](https://docs.astral.sh/uv/). O projeto é desenvolvido com a versão 0.13.5. O uv instala o Python 3.13 indicado em `.python-version`.
-- `make` e o GCC do host, acessível como `cc` e como `gcc`, com AddressSanitizer e UndefinedBehaviorSanitizer. Ele compila o `mpy-cross` e os testes nativos hospedados.
+- `make` e o GCC do host, acessível como `cc` e como `gcc`, com AddressSanitizer e UndefinedBehaviorSanitizer. Ele compila o `mpy-cross` e os testes nativos hospedados. No Amazon Linux 2023 o runtime dos sanitizers vem à parte, nos pacotes `libasan` e `libubsan`. Sem `make`, `cc` ou `gcc`, `build` termina com status 3 e diz qual falta.
+- Caminhos sem espaço para o repositório, o diretório de build e o cache da toolchain. O `make` separa nomes de arquivo nos espaços, e `build` recusa um caminho assim com status 3 e o cita. Acentos passam.
 - Cerca de 2,5 GB livres para a toolchain. Ela fica em `~/.cache/kernel-tool` ou no diretório indicado por `KERNEL_TOOL_CACHE`.
 - Para a rede: permissão para criar um namespace de rede com uma interface TAP. Serve rodar como root, um host que permita user namespaces sem privilégio com acesso a `/dev/net/tun`, ou `sudo` sem senha. Sem isso `run` segue sem rede, e as suítes de rede terminam com status 3.
 
@@ -61,7 +62,7 @@ shell: command=ping status=ok
 kernel> shutdown
 ```
 
-`--deadline` limita o tempo da sessão e `--without-network` dispensa a rede. O perfil padrão é `qemu-riscv64`; `--profile` escolhe outro arquivo de `config/profiles/`. O uso do shell está em [Operar o sistema](docs/operations/system-operation.md).
+`--deadline` limita o tempo da sessão e `--without-network` dispensa a rede. Quando a entrada vem de um pipe ou de um arquivo, `run` só a entrega ao sistema depois de `shell: ready`. O perfil padrão é `qemu-riscv64`; `--profile` escolhe outro arquivo de `config/profiles/`. O uso do shell está em [Operar o sistema](docs/operations/system-operation.md).
 
 ## Verificar
 

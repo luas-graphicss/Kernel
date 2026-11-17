@@ -87,10 +87,14 @@ Entrada: o serviço monta linhas a partir dos bytes recebidos e os ecoa.
 | `\r`, `\n` ou `\r\n` | Termina a linha |
 | Backspace ou delete | Apaga o último caractere, inteiro mesmo quando ele ocupa vários bytes de UTF-8 |
 | `0x15` | Apaga a linha |
+| TAB | Entra na linha como um espaço |
+| `0x1B` e a sequência de escape que ele inicia | Descartados. A sequência vai até o byte final de `ESC [`, até o byte seguinte a `ESC O` ou, nos outros casos, até o primeiro byte que não é intermediário. Um byte de controle no meio dela a encerra e tem o efeito de sempre |
 | Outro byte de controle | Descartado |
-| Byte além de 255 na linha | Descartado, com um sinal sonoro no eco |
+| Byte além de 255 na linha | Descartado, com um sinal sonoro no eco. A linha fica recusada até ser apagada inteira |
 
-Até quatro linhas completas esperam por um leitor. As seguintes são descartadas e contadas.
+Uma linha recusada não é entregue cortada. O `READ_LINE` que a receberia devolve `MESSAGE_TOO_LARGE`, e a leitura seguinte recebe a próxima linha.
+
+Até quatro linhas completas esperam por um leitor. Cada linha além disso é descartada, e o serviço escreve `console: dropped-lines=N` no console, em que N é o total descartado desde que o serviço iniciou.
 
 Um só leitor espera por vez. Um `READ_LINE` novo encerra o anterior com `CANCELLED`. Sem linha até o fim da espera, a resposta é `TIMED_OUT`.
 

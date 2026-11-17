@@ -36,6 +36,14 @@ kernel>
 
 `run` termina quando o sistema desliga, com status 0. `--deadline SEGUNDOS` encerra a sessão depois desse tempo, com status 1. Ctrl-C mata o emulador sem parada ordenada: o que não passou por `sync` pode se perder.
 
+Quando a entrada padrão não é um terminal, `run` retém o que chega por ela e só repassa ao console depois de `shell: ready`. Um comando enviado por pipe ou redirecionado de um arquivo chega inteiro:
+
+```sh
+printf 'ls boot\nshutdown\n' | uv run kernel-tool run --without-network
+```
+
+No terminal a entrada vai direto ao emulador. Digite depois do prompt: um byte enviado antes de o firmware preparar a porta serial se perde.
+
 ## O shell
 
 Uma linha é um comando e seus argumentos, separados por espaço. Aspas duplas juntam palavras em um argumento. Não há pipes, redirecionamento, variáveis, curingas nem histórico, e nenhum comando é um atalho para um programa do host.
@@ -44,6 +52,14 @@ Uma linha é um comando e seus argumentos, separados por espaço. Aspas duplas j
 | --- | --- |
 | Linha | 255 bytes |
 | Palavras | 16 |
+| Linhas completas à espera do shell | 4 |
+| Bytes recebidos à espera do console | 256 |
+
+O que passa de 255 bytes não entra na linha e toca a campainha. Uma linha que estourou não é executada: no Enter o shell responde `shell: command=none status=failed error=MESSAGE_TOO_LARGE`. Ctrl-U apaga a linha e permite recomeçar.
+
+O console guarda até quatro linhas completas enquanto o shell executa um comando. Cada linha além disso é descartada, e o console avisa com `console: dropped-lines=N`, em que N é o total descartado desde que o serviço de console iniciou. Um script deve esperar a linha de status de um comando antes de enviar o próximo. Uma rajada com mais de 256 bytes ainda não lidos perde o excesso antes de chegar ao console, sem aviso.
+
+TAB vale como espaço. Uma sequência de escape, como a das setas e das teclas de função, é descartada inteira.
 
 Todo comando termina com uma linha de status, e é ela que um script deve conferir:
 
@@ -100,6 +116,8 @@ shell: command=sync status=ok
 ```
 
 Um arquivo gravado só está garantido no disco depois de `sync` responder ou depois de uma parada ordenada. `rm boot/system/release` devolve `READ_ONLY`.
+
+Um `write` recusado, por exemplo com `NO_SPACE`, remove o arquivo que tinha acabado de criar. Um arquivo que já existia continua listado, vazio: o comando o esvazia antes de gravar.
 
 ## Programas
 
@@ -173,6 +191,7 @@ As linhas do próprio shell para esse comando, `shutdown: action=` e o status, n
 | --- | --- | --- |
 | `UNSUPPORTED` | Comando que não existe | `help` |
 | `INVALID_ARGUMENT` | Argumento ausente, número fora da faixa, aspas sem fechar ou mais de 16 palavras | Conferir a sintaxe na tabela |
+| `MESSAGE_TOO_LARGE` | Linha com mais de 255 bytes | Encurtar a linha. Ctrl-U apaga a que está em edição |
 | `NOT_FOUND` | Caminho ou aplicação que não existe | `ls`, `ps` |
 | `READ_ONLY` | Escrita em `boot`, ou em um volume montado somente leitura | Usar `data` ou `tmp` |
 | `NO_SPACE` | Volume de dados cheio | Remover arquivos e rodar `sync` |
