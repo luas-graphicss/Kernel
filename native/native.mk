@@ -3,6 +3,7 @@ NATIVE_ARCH_FLAGS := $(NATIVE_ISA_FLAGS) -mcmodel=medany -mno-relax
 NATIVE_PATH_MAPS := \
 	-ffile-prefix-map=$(CURDIR)=. \
 	-ffile-prefix-map=$(MICROPYTHON_DIR)=micropython \
+	-ffile-prefix-map=$(COMPILER_DIR)=compiler \
 	-ffile-prefix-map=$(BUILD)=build
 NATIVE_FREESTANDING_FLAGS := \
 	-ffreestanding -fno-common -fno-pie -fno-stack-protector \
