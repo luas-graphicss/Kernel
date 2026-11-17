@@ -36,6 +36,14 @@ void platform_console_write(const char *bytes, size_t length)
     }
 }
 
+void platform_collection_begins(void)
+{
+}
+
+void platform_collection_ends(void)
+{
+}
+
 _Noreturn void platform_fatal(const char *reason)
 {
     platform_console_write(FATAL_PREFIX, sizeof(FATAL_PREFIX) - 1u);

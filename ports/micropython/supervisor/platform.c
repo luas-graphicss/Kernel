@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 
+#include "kernel/diagnostics/collector_pauses.h"
 #include "kernel/diagnostics/console.h"
 #include "kernel/diagnostics/halt.h"
 #include "kernel/memory/image.h"
@@ -19,6 +20,16 @@ struct runtime_memory platform_runtime_memory(void)
 void platform_console_write(const char *bytes, size_t length)
 {
     console_write(bytes, length);
+}
+
+void platform_collection_begins(void)
+{
+    collector_pause_begins();
+}
+
+void platform_collection_ends(void)
+{
+    collector_pause_ends();
 }
 
 _Noreturn void platform_fatal(const char *reason)

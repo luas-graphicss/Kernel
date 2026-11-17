@@ -12,6 +12,8 @@ struct runtime_memory {
 
 struct runtime_memory platform_runtime_memory(void);
 void platform_console_write(const char *bytes, size_t length);
+void platform_collection_begins(void);
+void platform_collection_ends(void);
 _Noreturn void platform_fatal(const char *reason);
 
 #endif

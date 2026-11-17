@@ -21,6 +21,8 @@ INIT_PROGRAM = "kernel_services.init.main"
 INIT_PRIORITY = 1
 INIT_OPTION = "init="
 TRACE_OPTION = "trace=schedule"
+COLLECTOR_OPTION = "trace=collector"
+NANOSECONDS_PER_MICROSECOND = 1000
 PROGRAM_READY = "ok"
 EXIT_SUCCEEDED = 0
 TRACKED_COUNTERS = (
@@ -61,6 +63,16 @@ def open_registry() -> tuple[ProcessRegistry, int]:
     return ProcessRegistry(profile, budget), frame_bytes
 
 
+def report_collections() -> None:
+    count, total, longest, percentile_99 = _supervisor.collections()
+    report(
+        f"collector=measured collections={count} "
+        f"pause-total-us={total // NANOSECONDS_PER_MICROSECOND} "
+        f"pause-p99-us={percentile_99 // NANOSECONDS_PER_MICROSECOND} "
+        f"pause-longest-us={longest // NANOSECONDS_PER_MICROSECOND}"
+    )
+
+
 def describe_leaks(before: tuple[int, ...], after: tuple[int, ...]) -> str:
     leaks = ""
     for name, index in TRACKED_COUNTERS:
@@ -79,7 +91,8 @@ def run_init(arguments: str) -> bool:
         report(f"rejected=boot-module reason={status}")
         return False
     registry, frame_bytes = open_registry()
-    supervisor = Supervisor(registry, frame_bytes, TRACE_OPTION in arguments.split(" "))
+    options = arguments.split(" ")
+    supervisor = Supervisor(registry, frame_bytes, TRACE_OPTION in options)
     baseline = _supervisor.counters()
     handle = supervisor.start_init(program, INIT_PRIORITY)
     report(f"admitted=init program={program} handle={handle} priority={INIT_PRIORITY}")
@@ -90,6 +103,8 @@ def run_init(arguments: str) -> bool:
         f"live={registry.live()} memory-in-use={registry.memory_in_use()}"
     )
     leaks = describe_leaks(baseline, _supervisor.counters())
+    if COLLECTOR_OPTION in options:
+        report_collections()
     if supervisor.deadlocks:
         report(f"stopped=deadlock occurrences={supervisor.deadlocks}")
     if leaks:
