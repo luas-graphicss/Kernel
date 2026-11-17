@@ -1,5 +1,7 @@
 # Revisão da fronteira privilegiada
 
+[English](privileged-boundary-review.en.md)
+
 Leitura do código que roda em S-mode e decide o que um processo pode fazer. A revisão foi feita em 17 de novembro de 2026, sobre a árvore do release candidato 1.0.0rc1, por quem escreveu as ferramentas de homologação. Não é uma auditoria independente.
 
 ## Método
