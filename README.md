@@ -35,6 +35,8 @@ O kernel usa um único hart, e o isolamento foi exercitado só no QEMU com TCG. 
 
 A versão 1.0 ainda não está qualificada. Dois gates de release pedem 24 horas de execução cada, o soak e o fuzzing de cada família, e ainda não foram cumpridos. O estado de cada gate, com o que foi executado, está no [registro de homologação](docs/acceptance/qualification-and-distribution.md).
 
+Compilado e exercitado em Amazon Linux 2023: 998 testes de host e conformidade, 28/28 verificações da matriz, 1.000 boots e 8/8 budgets cumpridos. Duas compilações limpas reproduziram as imagens. Os hashes e o ambiente estão na [evidência de compilação](docs/acceptance/amazon-linux-2023.json); isso não substitui os dois gates de 24 horas ainda abertos.
+
 ## Requisitos do host
 
 - Linux x86_64. Os pacotes de `toolchain.lock.toml` são para essa plataforma.

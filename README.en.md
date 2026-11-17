@@ -35,6 +35,8 @@ The kernel uses a single hart, and isolation was exercised only on QEMU with TCG
 
 Version 1.0 is not qualified yet. Two release gates ask for 24 hours of execution each, the soak and the fuzzing of each family, and they have not been met. The state of each gate, with what was run, is in the [qualification record](docs/acceptance/qualification-and-distribution.en.md).
 
+Built and exercised on Amazon Linux 2023: 998 host and conformance tests, 28/28 matrix checks, 1000 boots and 8/8 budgets passed. Two clean builds reproduced the images. Hashes and environment are in the [build evidence](docs/acceptance/amazon-linux-2023.json); this does not replace the two outstanding 24-hour gates.
+
 ## Host requirements
 
 - Linux x86_64. The packages in `toolchain.lock.toml` are for that platform.

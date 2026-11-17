@@ -1,0 +1,560 @@
+{
+  "recorded_date": "2026-11-17",
+  "execution_utc": {
+    "start": "06:22:26",
+    "end": "06:44:31"
+  },
+  "source_commit": "415034cc7257e668116c995d24afe8899eb7a6c6",
+  "source_files": 930,
+  "source_content_sha256": "ea60125853f2104a0f41e30f5f0cc31393e66144d5061d4ca92703de6b216d9a",
+  "source_digest_method": "SHA-256 of sorted relative UTF-8 paths, NUL and raw SHA-256 per non-Markdown project file at source_commit; exclude this evidence file when checking later documentation-only commits",
+  "host": {
+    "os_release": "Amazon Linux 2023.12.20261112",
+    "kernel": "6.18.56",
+    "architecture": "x86_64"
+  },
+  "artifacts": {
+    "kernel.elf": {
+      "bytes": 1642912,
+      "sha256": "efeb6d8c6fba1d0bbfb68e3b6c70ec1713fc57b220a6d73f92961fbc53076f75"
+    },
+    "kernel-selftest.elf": {
+      "bytes": 1740456,
+      "sha256": "bb75b6dd173d7a50dd75d56baa51e782d3b60c6a1a647f57529e84c1461d06ca"
+    },
+    "init.img": {
+      "bytes": 433471,
+      "sha256": "38ce15e2e90d65c637030e660dc49de91abf7ce41614ef624e1ad42f3ca8dea0"
+    },
+    "tests.img": {
+      "bytes": 627863,
+      "sha256": "91acb1a8a10de6d5741c8425e399e2e48d6a2d7352e37fa97a8b0bcacffe05d3"
+    },
+    "boot.img": {
+      "bytes": 65536,
+      "sha256": "d676ac117840712a66ff275a6c3036c4918c562be9fb820bc790d4be7c5e7b2c"
+    },
+    "fault.img": {
+      "bytes": 74,
+      "sha256": "12218c97e53efca26189319e060c50850fab06f93172d13e33f0b3bebe5deb96"
+    }
+  },
+  "verification": {
+    "areas": [
+      "host",
+      "native",
+      "runtime",
+      "emulation",
+      "interoperability",
+      "recovery"
+    ],
+    "artifacts": {
+      "boot.img": "d676ac117840712a66ff275a6c3036c4918c562be9fb820bc790d4be7c5e7b2c",
+      "init.img": "38ce15e2e90d65c637030e660dc49de91abf7ce41614ef624e1ad42f3ca8dea0",
+      "kernel.elf": "efeb6d8c6fba1d0bbfb68e3b6c70ec1713fc57b220a6d73f92961fbc53076f75"
+    },
+    "checks": [
+      {
+        "area": "host",
+        "detail": "",
+        "name": "format",
+        "seconds": 0.039,
+        "status": "passed"
+      },
+      {
+        "area": "host",
+        "detail": "",
+        "name": "lint",
+        "seconds": 0.038,
+        "status": "passed"
+      },
+      {
+        "area": "host",
+        "detail": "",
+        "name": "types",
+        "seconds": 0.229,
+        "status": "passed"
+      },
+      {
+        "area": "host",
+        "detail": "",
+        "name": "host-tests",
+        "seconds": 10.411,
+        "status": "passed"
+      },
+      {
+        "area": "host",
+        "detail": "",
+        "name": "frozen-interfaces",
+        "seconds": 0.003,
+        "status": "passed"
+      },
+      {
+        "area": "native",
+        "detail": "",
+        "name": "native-check",
+        "seconds": 30.791,
+        "status": "passed"
+      },
+      {
+        "area": "native",
+        "detail": "",
+        "name": "fuzzing-corpus",
+        "seconds": 2.288,
+        "status": "passed"
+      },
+      {
+        "area": "native",
+        "detail": "",
+        "name": "build",
+        "seconds": 0.338,
+        "status": "passed"
+      },
+      {
+        "area": "native",
+        "detail": "",
+        "name": "artifacts",
+        "seconds": 0.174,
+        "status": "passed"
+      },
+      {
+        "area": "emulation",
+        "detail": "",
+        "name": "suite-applications",
+        "seconds": 5.179,
+        "status": "passed"
+      },
+      {
+        "area": "runtime",
+        "detail": "",
+        "name": "suite-bootstrap",
+        "seconds": 40.132,
+        "status": "passed"
+      },
+      {
+        "area": "emulation",
+        "detail": "",
+        "name": "suite-capabilities",
+        "seconds": 0.173,
+        "status": "passed"
+      },
+      {
+        "area": "emulation",
+        "detail": "",
+        "name": "suite-devices",
+        "seconds": 0.771,
+        "status": "passed"
+      },
+      {
+        "area": "emulation",
+        "detail": "",
+        "name": "suite-ipc",
+        "seconds": 0.487,
+        "status": "passed"
+      },
+      {
+        "area": "emulation",
+        "detail": "",
+        "name": "suite-memory",
+        "seconds": 0.556,
+        "status": "passed"
+      },
+      {
+        "area": "interoperability",
+        "detail": "",
+        "name": "suite-network",
+        "seconds": 13.262,
+        "status": "passed"
+      },
+      {
+        "area": "interoperability",
+        "detail": "",
+        "name": "suite-network-interop",
+        "seconds": 8.65,
+        "status": "passed"
+      },
+      {
+        "area": "emulation",
+        "detail": "",
+        "name": "suite-processes",
+        "seconds": 63.439,
+        "status": "passed"
+      },
+      {
+        "area": "recovery",
+        "detail": "",
+        "name": "suite-release-journey",
+        "seconds": 3.552,
+        "status": "passed"
+      },
+      {
+        "area": "emulation",
+        "detail": "",
+        "name": "suite-scheduling",
+        "seconds": 1.386,
+        "status": "passed"
+      },
+      {
+        "area": "recovery",
+        "detail": "",
+        "name": "suite-storage",
+        "seconds": 4.777,
+        "status": "passed"
+      },
+      {
+        "area": "emulation",
+        "detail": "",
+        "name": "suite-supervision",
+        "seconds": 3.514,
+        "status": "passed"
+      },
+      {
+        "area": "recovery",
+        "detail": "",
+        "name": "suite-system-journey",
+        "seconds": 4.548,
+        "status": "passed"
+      },
+      {
+        "area": "emulation",
+        "detail": "",
+        "name": "suite-vfs",
+        "seconds": 1.679,
+        "status": "passed"
+      },
+      {
+        "area": "recovery",
+        "detail": "",
+        "name": "faults-device-reset",
+        "seconds": 7.149,
+        "status": "passed"
+      },
+      {
+        "area": "interoperability",
+        "detail": "",
+        "name": "faults-network-faults",
+        "seconds": 3.723,
+        "status": "passed"
+      },
+      {
+        "area": "recovery",
+        "detail": "",
+        "name": "faults-storage-crash",
+        "seconds": 2.432,
+        "status": "passed"
+      },
+      {
+        "area": "recovery",
+        "detail": "",
+        "name": "volume-corpus",
+        "seconds": 0.01,
+        "status": "passed"
+      }
+    ],
+    "complete": true,
+    "passed": true,
+    "profile": "qemu-riscv64",
+    "whole_matrix": true
+  },
+  "measurements": {
+    "artifacts": {
+      "boot.img": "d676ac117840712a66ff275a6c3036c4918c562be9fb820bc790d4be7c5e7b2c",
+      "init.img": "38ce15e2e90d65c637030e660dc49de91abf7ce41614ef624e1ad42f3ca8dea0",
+      "kernel.elf": "efeb6d8c6fba1d0bbfb68e3b6c70ec1713fc57b220a6d73f92961fbc53076f75"
+    },
+    "budgets": [
+      {
+        "condition": "host clock from the start of the emulator until the ordered shutdown ends, release image, valid volume and isolated network",
+        "limit": 15,
+        "met": true,
+        "metric": "boot-to-shell-seconds",
+        "value": 0.405
+      },
+      {
+        "condition": "machine memory minus free frames with the mandatory services and the shell idle",
+        "limit": 100663296,
+        "met": true,
+        "metric": "idle-committed-bytes",
+        "value": 24002560
+      },
+      {
+        "condition": "machine memory minus free frames with every application slot holding its heap",
+        "limit": 234881024,
+        "met": true,
+        "metric": "loaded-committed-bytes",
+        "value": 32735232
+      },
+      {
+        "condition": "guest clock, 10000 calls to an echo process, no disk and no network",
+        "limit": 25000,
+        "met": true,
+        "metric": "ipc-round-trip-p99-us",
+        "value": 1585
+      },
+      {
+        "condition": "guest clock, delay after a timer deadline with the mandatory services, four processor-bound applications and two file-bound applications",
+        "limit": 250000,
+        "met": true,
+        "metric": "ready-task-response-p99-us",
+        "value": 51389
+      },
+      {
+        "condition": "supervisor collector pauses of the loaded system session, 99th percentile",
+        "limit": 25000,
+        "met": true,
+        "metric": "collector-pause-p99-us",
+        "value": 2648
+      },
+      {
+        "condition": "longest supervisor collector pause observed in the loaded system session",
+        "limit": 100000,
+        "met": true,
+        "metric": "collector-pause-longest-us",
+        "value": 2648
+      },
+      {
+        "condition": "guest clock from the kill of a process until every frame it held is free again",
+        "limit": 1000000,
+        "met": true,
+        "metric": "release-after-exit-max-us",
+        "value": 1197
+      }
+    ],
+    "machine": {
+      "accelerator": "tcg",
+      "cpu": "rv64,h=off,v=off",
+      "emulator": "xPack QEMU emulator version 9.2.4",
+      "emulator_sha256": "30f7f3dac825feb8d532258decdb08394a36808ee1b1377a4f0ff484771f971a",
+      "guest_memory_mib": 256,
+      "harts": 1,
+      "host": "Linux-6.18.56-x86_64-with-glibc2.34",
+      "host_memory": "4024416 kB",
+      "machine": "virt,aia=none,acpi=off",
+      "processor": "Intel(R) Xeon(R) Processor @ 2.90GHz",
+      "processors": 2
+    },
+    "measurements": {
+      "boot-to-shell-seconds": 0.405,
+      "collector-collections": 3,
+      "collector-pause-longest-us": 2648,
+      "collector-pause-p99-us": 2648,
+      "idle-committed-bytes": 24002560,
+      "ipc-round-trip-max-us": 2075,
+      "ipc-round-trip-p50-us": 916,
+      "ipc-round-trip-p99-us": 1585,
+      "ipc-round-trip-samples": 10000,
+      "loaded-committed-bytes": 32735232,
+      "ready-task-response-max-us": 81077,
+      "ready-task-response-p50-us": 33807,
+      "ready-task-response-p99-us": 51389,
+      "ready-task-response-samples": 400,
+      "release-after-exit-max-us": 1197,
+      "release-after-exit-p50-us": 704,
+      "release-after-exit-p99-us": 1197,
+      "release-after-exit-samples": 50
+    },
+    "passed": true,
+    "profile": "qemu-riscv64"
+  },
+  "boot_summary": {
+    "completed": 1000,
+    "distinct_transcripts": 8,
+    "failed": [],
+    "fastest_seconds": 0.281,
+    "passed": true,
+    "profile": "qemu-riscv64",
+    "requested": 1000,
+    "slowest_seconds": 0.494
+  },
+  "reproduction": {
+    "artifacts": {
+      "boot.img": "d676ac117840712a66ff275a6c3036c4918c562be9fb820bc790d4be7c5e7b2c",
+      "init.img": "38ce15e2e90d65c637030e660dc49de91abf7ce41614ef624e1ad42f3ca8dea0",
+      "kernel.elf": "efeb6d8c6fba1d0bbfb68e3b6c70ec1713fc57b220a6d73f92961fbc53076f75"
+    },
+    "builds": [
+      {
+        "directory": "/vercel/share/kernel-work/build/qemu-riscv64-reproduce-first",
+        "sha256": {
+          "boot.img": "d676ac117840712a66ff275a6c3036c4918c562be9fb820bc790d4be7c5e7b2c",
+          "fault.img": "12218c97e53efca26189319e060c50850fab06f93172d13e33f0b3bebe5deb96",
+          "init.img": "38ce15e2e90d65c637030e660dc49de91abf7ce41614ef624e1ad42f3ca8dea0",
+          "kernel-selftest.elf": "bb75b6dd173d7a50dd75d56baa51e782d3b60c6a1a647f57529e84c1461d06ca",
+          "kernel.elf": "efeb6d8c6fba1d0bbfb68e3b6c70ec1713fc57b220a6d73f92961fbc53076f75",
+          "tests.img": "91acb1a8a10de6d5741c8425e399e2e48d6a2d7352e37fa97a8b0bcacffe05d3"
+        }
+      },
+      {
+        "directory": "/vercel/share/kernel-work/build/qemu-riscv64-reproduce-second",
+        "sha256": {
+          "boot.img": "d676ac117840712a66ff275a6c3036c4918c562be9fb820bc790d4be7c5e7b2c",
+          "fault.img": "12218c97e53efca26189319e060c50850fab06f93172d13e33f0b3bebe5deb96",
+          "init.img": "38ce15e2e90d65c637030e660dc49de91abf7ce41614ef624e1ad42f3ca8dea0",
+          "kernel-selftest.elf": "bb75b6dd173d7a50dd75d56baa51e782d3b60c6a1a647f57529e84c1461d06ca",
+          "kernel.elf": "efeb6d8c6fba1d0bbfb68e3b6c70ec1713fc57b220a6d73f92961fbc53076f75",
+          "tests.img": "91acb1a8a10de6d5741c8425e399e2e48d6a2d7352e37fa97a8b0bcacffe05d3"
+        }
+      }
+    ],
+    "compared_with_current": true,
+    "differing": [],
+    "differing_from_current": [],
+    "passed": true,
+    "profile": "qemu-riscv64",
+    "source_date_epoch": 1787581954
+  },
+  "soak_summary": {
+    "collector": {
+      "collections": 4,
+      "longest": 3056,
+      "p99": 3056,
+      "total": 10657
+    },
+    "failures": [],
+    "log": "/vercel/share/kernel-work/build/qemu-riscv64/soak/soak.log",
+    "network": true,
+    "passed": true,
+    "profile": "qemu-riscv64",
+    "requested_hours": 0.05,
+    "seconds": 180.566,
+    "trends": {
+      "buffers": {
+        "earlier_extreme": 6,
+        "earlier_median": 6,
+        "later_extreme": 6,
+        "later_median": 6,
+        "persistent": false,
+        "samples": 178
+      },
+      "capabilities": {
+        "earlier_extreme": 64,
+        "earlier_median": 64,
+        "later_extreme": 64,
+        "later_median": 64,
+        "persistent": false,
+        "samples": 178
+      },
+      "endpoints": {
+        "earlier_extreme": 18,
+        "earlier_median": 18,
+        "later_extreme": 18,
+        "later_median": 18,
+        "persistent": false,
+        "samples": 178
+      },
+      "frames-free": {
+        "earlier_extreme": 59676,
+        "earlier_median": 59676,
+        "later_extreme": 59676,
+        "later_median": 59676,
+        "persistent": false,
+        "samples": 178
+      },
+      "ipc-bytes": {
+        "earlier_extreme": 0,
+        "earlier_median": 0,
+        "later_extreme": 0,
+        "later_median": 0,
+        "persistent": false,
+        "samples": 178
+      },
+      "objects": {
+        "earlier_extreme": 39,
+        "earlier_median": 39,
+        "later_extreme": 39,
+        "later_median": 39,
+        "persistent": false,
+        "samples": 178
+      },
+      "processes": {
+        "earlier_extreme": 8,
+        "earlier_median": 8,
+        "later_extreme": 8,
+        "later_median": 8,
+        "persistent": false,
+        "samples": 178
+      },
+      "round-duration-us": {
+        "earlier_extreme": 1249395,
+        "earlier_median": 948345.0,
+        "later_extreme": 1298775,
+        "later_median": 947108,
+        "persistent": false,
+        "samples": 177
+      }
+    },
+    "warm_up_rounds": 8
+  },
+  "release": {
+    "artifacts": {
+      "boot.img": "d676ac117840712a66ff275a6c3036c4918c562be9fb820bc790d4be7c5e7b2c",
+      "init.img": "38ce15e2e90d65c637030e660dc49de91abf7ce41614ef624e1ad42f3ca8dea0",
+      "kernel.elf": "efeb6d8c6fba1d0bbfb68e3b6c70ec1713fc57b220a6d73f92961fbc53076f75"
+    },
+    "gates": [
+      {
+        "detail": "28 checks of the whole matrix passed",
+        "met": true,
+        "name": "correctness"
+      },
+      {
+        "detail": "1000 boots reached the shell and stopped in order",
+        "met": true,
+        "name": "boot"
+      },
+      {
+        "detail": "passed: suite-processes",
+        "met": true,
+        "name": "lifecycle"
+      },
+      {
+        "detail": "the soak ran 0.05 hours in one boot; 24 are required",
+        "met": false,
+        "name": "stability"
+      },
+      {
+        "detail": "boot accumulated 0.02 of 24 hours; interface accumulated 0.02 of 24 hours; storage accumulated 0.02 of 24 hours; network accumulated 0.02 of 24 hours",
+        "met": false,
+        "name": "fuzzing"
+      },
+      {
+        "detail": "passed: suite-memory, suite-capabilities, suite-ipc, suite-devices, faults-device-reset",
+        "met": true,
+        "name": "isolation"
+      },
+      {
+        "detail": "passed: suite-storage, faults-storage-crash, volume-corpus",
+        "met": true,
+        "name": "durability"
+      },
+      {
+        "detail": "passed: suite-network, suite-network-interop, faults-network-faults",
+        "met": true,
+        "name": "network"
+      },
+      {
+        "detail": "every pinned component is reviewed and its license accepted",
+        "met": true,
+        "name": "dependencies"
+      },
+      {
+        "detail": "clean builds reproduce the images; update and recovery passed",
+        "met": true,
+        "name": "distribution"
+      },
+      {
+        "detail": "the frozen interfaces match their recorded digests",
+        "met": true,
+        "name": "interfaces"
+      },
+      {
+        "detail": "every budget is met on the recorded machine",
+        "met": true,
+        "name": "budgets"
+      }
+    ],
+    "profile": "qemu-riscv64",
+    "ready": false,
+    "version": "1.0.0rc1"
+  }
+}

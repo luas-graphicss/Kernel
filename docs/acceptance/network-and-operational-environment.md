@@ -1,5 +1,9 @@
 # Registro de aceite: rede e ambiente operacional
 
+[English](network-and-operational-environment.en.md)
+
+Este registro é histórico e vale só para as imagens abaixo, não para o release atual. A evidência atual está em [Qualificação e distribuição](qualification-and-distribution.md).
+
 Resultado de uma execução completa das verificações do projeto sobre a árvore que acrescenta a rede IPv4, os sockets, o gerente do sistema, o shell e as aplicações. Os números vêm dos relatórios que a execução gravou em `build/qemu-riscv64/reports/`. O que não foi medido não aparece aqui.
 
 ## A execução
@@ -226,5 +230,5 @@ As tabelas das outras seções são da execução original, que tinha 873 testes
 
 - Os tempos são de um host e de TCG. Não valem para hardware físico.
 - A interoperabilidade foi conferida contra uma pilha só, a do Linux 6.18.56.
-- O fuzzing dos parsers continua aberto, como diz a linha R-19 de `docs/architecture/requirements.md`.
+- O fuzzing dos parsers ainda estava aberto neste marco, conforme R-19 de `docs/architecture/requirements.md`; a qualificação posterior está registrada separadamente.
 - O resultado do CI no runner `ubuntu-24.04` fica no pull request, e não nesta página.
