@@ -1,6 +1,7 @@
 import argparse
 import logging
 from contextlib import ExitStack
+from dataclasses import dataclass
 from pathlib import Path
 
 from kernel_tool.build.native import build_outputs, require_artifacts
@@ -13,10 +14,12 @@ from kernel_tool.commands.options import (
 from kernel_tool.network.link import StationLink
 from kernel_tool.network.plan import NetworkPlan
 from kernel_tool.outcome import CheckError, ExitCode, InfrastructureError
+from kernel_tool.profiles.model import Profile
 from kernel_tool.qemu.command import BootRequest, boot_command
 from kernel_tool.qemu.console import run_attached
 from kernel_tool.qemu.drives import Drive, FileDrive
 from kernel_tool.qemu.session import SessionResult
+from kernel_tool.release.installation import open_installation
 from kernel_tool.scenarios.disks import BOOT_IDENTITY, DATA_BLOCKS, DATA_IDENTITY, DATA_VOLUME
 from kernel_tool.scenarios.guest_program import INIT_OPTION
 from kernel_tool.scenarios.shell import MANAGER_PROGRAM
@@ -29,7 +32,19 @@ DATA_IMAGE = "data.img"
 NETWORK_DIRECTORY = "network"
 RESTART_REQUESTED = "kernel: power=restart"
 
+KERNEL_FILE = "kernel.elf"
+INIT_FILE = "init.img"
+BOOT_FILE = "boot.img"
+
 logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True, slots=True)
+class SystemFiles:
+    kernel: Path
+    init_image: Path
+    boot_image: Path
+    directory: Path
 
 
 def register(commands: CommandRegistry) -> None:
@@ -48,27 +63,31 @@ def register(commands: CommandRegistry) -> None:
         action="store_true",
         help="boot without the network device and its isolated peer",
     )
+    run.add_argument(
+        "--installation",
+        type=Path,
+        default=None,
+        help="boot the release installed in this directory instead of the build",
+    )
     run.set_defaults(handler=run_system)
 
 
 def run_system(workspace: Workspace, options: argparse.Namespace) -> ExitCode:
     profile = selected_profile(workspace, options)
     toolchain = load_toolchain(workspace)
-    outputs = build_outputs(workspace, profile)
-    require_artifacts(outputs)
-    directory = outputs.directory / SYSTEM_DIRECTORY
-    directory.mkdir(parents=True, exist_ok=True)
-    drives = system_drives(outputs.boot_image, directory)
+    system = system_files(workspace, profile, options.installation)
+    system.directory.mkdir(parents=True, exist_ok=True)
+    drives = system_drives(system.boot_image, system.directory)
     deadline: float | None = options.deadline
     without_network: bool = options.without_network
 
     with ExitStack() as stack:
-        link = None if without_network else attach_network(stack, directory)
+        link = None if without_network else attach_network(stack, system.directory)
         while True:
             request = BootRequest(
-                kernel=outputs.kernel,
+                kernel=system.kernel,
                 memory_mib=profile.machine.memory_mib,
-                boot_module=outputs.init_image,
+                boot_module=system.init_image,
                 arguments=INIT_OPTION + MANAGER_PROGRAM,
                 drives=drives,
                 entropy=True,
@@ -81,6 +100,25 @@ def run_system(workspace: Workspace, options: argparse.Namespace) -> ExitCode:
             if not asks_restart(result, deadline):
                 return ExitCode.OK
             logger.info("the system asked for a restart; booting it again")
+
+
+def system_files(workspace: Workspace, profile: Profile, installation: Path | None) -> SystemFiles:
+    if installation is not None:
+        release = open_installation(installation).release
+        return SystemFiles(
+            kernel=release / KERNEL_FILE,
+            init_image=release / INIT_FILE,
+            boot_image=release / BOOT_FILE,
+            directory=installation,
+        )
+    outputs = build_outputs(workspace, profile)
+    require_artifacts(outputs)
+    return SystemFiles(
+        kernel=outputs.kernel,
+        init_image=outputs.init_image,
+        boot_image=outputs.boot_image,
+        directory=outputs.directory / SYSTEM_DIRECTORY,
+    )
 
 
 def system_drives(boot_image: Path, directory: Path) -> tuple[Drive, ...]:

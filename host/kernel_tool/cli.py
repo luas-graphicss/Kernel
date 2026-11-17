@@ -13,6 +13,7 @@ from kernel_tool.commands import (
     emulation,
     fault_test,
     fuzz,
+    installation,
     interfaces,
     release,
     reproduce,
@@ -42,6 +43,7 @@ REGISTRARS = (
     reproduce.register,
     interfaces.register,
     release.register,
+    installation.register,
 )
 
 logger = logging.getLogger("kernel_tool")
