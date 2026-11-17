@@ -1,5 +1,7 @@
 # Operar a rede
 
+[English](network-operation.en.md)
+
 Como a interface de rede é configurada, o que existe do outro lado do cabo no QEMU, como conferir a conectividade pelo shell e como ler as falhas. O que a pilha suporta está em `specs/network/protocols.md`.
 
 ## A interface

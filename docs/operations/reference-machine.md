@@ -1,5 +1,7 @@
 # Máquina de referência, workload e budgets iniciais
 
+[English](reference-machine.en.md)
+
 Define onde e com que carga as medições do projeto são feitas, e os limites que os testes aplicam hoje. Resultados obtidos com TCG não são extrapolados para hardware físico.
 
 ## Máquina de referência

@@ -1,5 +1,7 @@
 # Kernel
 
+[English](README.en.md)
+
 Kernel Python-first para RISC-V de 64 bits. As políticas do sistema são escritas em Python e rodam em MicroPython dentro do supervisor, em S-mode. Cada processo de usuário é outro MicroPython, em U-mode, com o próprio espaço de endereçamento. O código nativo, em C17 e Assembly, cobre o que depende da máquina e o que não pode confiar em Python: boot, traps, memória virtual, troca de contexto, capabilities, IPC, transporte de dispositivos e validação das chamadas de processo.
 
 O alvo é a máquina `virt` do QEMU com o firmware OpenSBI. O convidado não tem Linux e não usa semihosting.
@@ -174,6 +176,8 @@ Os relatórios de homologação ficam em `build/qemu-riscv64/qualification/` e e
 | `docs/` | Decisões de arquitetura, requisitos, conformidade, segurança, operação e registros de aceite |
 
 ## Documentação
+
+Cada documento tem a versão em português, que é a original, e uma versão em inglês ao lado, com o sufixo `.en.md`.
 
 - [Operar o sistema](docs/operations/system-operation.md), [operar a rede](docs/operations/network-operation.md) e [serviços e configuração](docs/operations/services-and-configuration.md)
 - [Matriz de requisitos](docs/architecture/requirements.md) e [matriz de conformidade das APIs públicas](docs/architecture/api-conformance.md)

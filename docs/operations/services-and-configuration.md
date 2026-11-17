@@ -1,5 +1,7 @@
 # Serviços e configuração
 
+[English](services-and-configuration.en.md)
+
 Como ler o estado dos serviços, o que acontece quando um deles falha e como mudar a configuração do sistema. As regras completas estão em `specs/system/configuration.md` e em `specs/system/control-service.md`.
 
 ## O que roda

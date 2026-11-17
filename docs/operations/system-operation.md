@@ -1,5 +1,7 @@
 # Operar o sistema
 
+[English](system-operation.en.md)
+
 Como iniciar o sistema no QEMU, usar o shell, rodar programas do volume e desligar. Os trechos de console desta página são a saída da suíte `system-journey`.
 
 ## Iniciar

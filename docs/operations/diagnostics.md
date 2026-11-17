@@ -1,5 +1,7 @@
 # Diagnosticar
 
+[English](diagnostics.en.md)
+
 Onde olhar quando algo falha, no convidado e nas ferramentas do host.
 
 ## O que o console diz

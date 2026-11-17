@@ -1,5 +1,7 @@
 # Integração contínua
 
+[English](continuous-integration.en.md)
+
 O workflow `.github/workflows/ci.yml` roda em cada pull request e em cada push para `main`. Ele executa os mesmos comandos do desenvolvimento local e não publica nada.
 
 ## Etapas

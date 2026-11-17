@@ -1,5 +1,7 @@
 # Instalar, atualizar e recuperar
 
+[English](installation.en.md)
+
 O alvo suportado é a máquina `virt` do QEMU para RISC-V de 64 bits, com o firmware OpenSBI, descrita em `config/profiles/qemu-riscv64.toml`. Um pacote de release traz imagens para esse alvo. Ele não é uma ISO, não inicia em um PC e não foi homologado em hardware físico.
 
 ## O que há em um pacote
