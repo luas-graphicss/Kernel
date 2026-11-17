@@ -1,4 +1,3 @@
-import shutil
 import subprocess
 import sys
 from dataclasses import asdict, dataclass
@@ -6,6 +5,7 @@ from pathlib import Path
 
 from kernel_tool.outcome import InfrastructureError
 from kernel_tool.toolchain.fetch import sha256_file
+from kernel_tool.toolchain.host_tools import locate_host_tool
 from kernel_tool.toolchain.resolve import Toolchain
 
 VERSION_TIMEOUT_SECONDS = 20
@@ -49,7 +49,7 @@ def collect_inventory(toolchain: Toolchain) -> Inventory:
         for name in PINNED_CROSS_TOOLS
     ]
     pinned_tools.append(_describe(EMULATOR_TOOL, "pinned", toolchain.emulator(EMULATOR_TOOL)))
-    host_tools = [_describe(name, "host", _locate_host_tool(name)) for name in HOST_TOOLS]
+    host_tools = [_describe(name, "host", locate_host_tool(name).resolve()) for name in HOST_TOOLS]
     python = ToolRecord(
         name="python",
         origin="host",
@@ -69,13 +69,6 @@ def collect_inventory(toolchain: Toolchain) -> Inventory:
         ),
         tools=(*pinned_tools, *host_tools, python),
     )
-
-
-def _locate_host_tool(name: str) -> Path:
-    location = shutil.which(name)
-    if location is None:
-        raise InfrastructureError(f"required host tool {name!r} is not installed")
-    return Path(location).resolve()
 
 
 def _describe(name: str, origin: str, executable: Path) -> ToolRecord:
